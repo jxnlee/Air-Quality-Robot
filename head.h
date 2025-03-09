@@ -16,9 +16,15 @@
 #define HIGH	1
 
 // Pinout
-#define DHT_PIN	7
-#define TRIGGER_PIN	4
-#define ECHO_PIN	5
+#define DHT_PIN			7
+#define TRIGGER_PIN		4
+#define ECHO_PIN		5
+#define L_MOTORS_SPD_PIN	23
+#define L_MOTORS1_PIN		25
+#define L_MOTORS2_PIN		24
+#define R_MOTORS1_PIN		28
+#define R_MOTORS2_PIN		27
+#define R_MOTORS_SPD_PIN	29
 
 // Helper Functions / Variables / Structs
 unsigned long pulseIn(int pin, int level);
