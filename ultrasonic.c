@@ -1,7 +1,7 @@
 #include "ultrasonic.h"
 #include "head.h"
 
-class Ultrasonic {
+
 
 	void init_ultrasonic()
 {
@@ -20,4 +20,4 @@ void read_ultrasonic(unsigned long* distance)
 	*distance = duration / 2 / 7.6;
 }
 
-}
+

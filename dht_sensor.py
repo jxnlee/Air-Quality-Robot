@@ -1,7 +1,7 @@
 import ctypes
 
 
-dht_lib = ctypes.CDLL("./libdht.so")
+dht_lib = ctypes.CDLL("./dht.so")
 
 dht_lib.read_dht.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float)]
 dht_lib.read_dht.restype = ctypes.c_int

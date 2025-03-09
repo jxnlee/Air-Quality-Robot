@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from breezyslam.algorithms import RMHC_SLAM
-from breezyslam.sensors import Sensor
+#from breezyslam.sensors import Sensor
 import numpy as np
 import matplotlib.pyplot as plt
 import time

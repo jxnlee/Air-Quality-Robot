@@ -29,7 +29,7 @@ int read_dht(float* temperature, float* humidity)
 	for ( i = 0; i < MAXTIMINGS; i++ )
 	{
 		counter = 0;
-		while ( digitalRead( DHT_PIN ) == laststate )
+		while ( (digitalRead( DHT_PIN )) == laststate )
 		{
 			counter++;
 			delayMicroseconds( 1 );
