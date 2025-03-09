@@ -10,6 +10,8 @@ from threading import Thread
 import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
 import ultrasonic_sensor
 import dht_sensor
+import l298n_act
+
 
 class RobotSLAM:
     """
@@ -20,6 +22,7 @@ class RobotSLAM:
         # Initialize sensor and SLAM objects
         self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
+        self.l298nAct = l298n_act.L298N()
         # Create SLAM object
         self.slam = RMHC_SLAM(
             self.utSensor,                # Sensor model
@@ -83,9 +86,10 @@ class RobotSLAM:
         self.trajectory.append([map_x, map_y])
     
 
-    def turn_right(self):
+    def turn(self):
         """Turn the robot 90 degrees to the right"""
         self.direction = (self.direction + 1) % 4
+        self.l298nAct.turn_right()
         print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 90}°)")
         time.sleep(0.5)  # Simulate turn time
 
@@ -102,8 +106,9 @@ class RobotSLAM:
             # if distance is ceratin value, move directions
             if distance <= 500:
                 # Turn right when obstacle detected
-                self.turn_right()
-
+                self.turn()
+            else:
+                self.l298nAct.drive_forward()
             scan = self.utSensor.get_scan() 
 
             self.update_odometry(dt)
@@ -121,9 +126,6 @@ class RobotSLAM:
             
             # Calculate index in the flat array
             index = map_y * self.map_size_pixels + map_x
-            
-            # TODO: either create multiple arrays or use a 3d array or a numpy array to hold multiple data.         
-            dht_value = self.dhtSensor.read_dht()
             
             # Store the value in your parallel array
             if 0 <= index < len(self.dht_data):

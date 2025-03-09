@@ -23,7 +23,7 @@ l298n_lib.drive_backward.argtypes = [ctypes.c_int]
 l298n_lib.drive_backward.restype = None
 
 
-class CarMotor:
+class L298N:
     def __init__(self):
         self.l298n_lib = l298n_lib
         self.l298n_lib.init_l298n()
