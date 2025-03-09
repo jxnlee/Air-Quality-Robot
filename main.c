@@ -16,7 +16,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	init_ultrasonic();
-	if (!init_pms()) return 0;
 	float temperature;
 	float humidity;
 	long distance;
@@ -40,7 +39,7 @@ int main(int argc, char* argv[])
 		/*
 		if (read_pms(&pms5003_data))
 		{
-			print_pms_readings(&pms5003_data);
+			print_pms_readings(&pms5003_data);	
 		}
 		else
 		{

@@ -1,7 +1,9 @@
 #include "ultrasonic.h"
 #include "head.h"
 
-void init_ultrasonic()
+
+
+	void init_ultrasonic()
 {
 	pinMode(ECHO_PIN, INPUT);
 	pinMode(TRIGGER_PIN, OUTPUT);
@@ -17,3 +19,5 @@ void read_ultrasonic(unsigned long* distance)
 	duration = pulseIn(ECHO_PIN, HIGH);
 	*distance = duration / 2 / 7.6;
 }
+
+

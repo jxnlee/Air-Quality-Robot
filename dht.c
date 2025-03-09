@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdint.h>
 #include "dht.h"
 #include "head.h"
 
@@ -5,7 +7,9 @@
 
 
 int data[5] = { 0, 0, 0, 0, 0 };
- 
+
+__attribute__((visibility("default")))
+
 int read_dht(float* temperature, float* humidity)
 {
 	uint8_t laststate	= HIGH;
@@ -25,7 +29,7 @@ int read_dht(float* temperature, float* humidity)
 	for ( i = 0; i < MAXTIMINGS; i++ )
 	{
 		counter = 0;
-		while ( digitalRead( DHT_PIN ) == laststate )
+		while ( (digitalRead( DHT_PIN )) == laststate )
 		{
 			counter++;
 			delayMicroseconds( 1 );
