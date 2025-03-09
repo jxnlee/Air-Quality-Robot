@@ -63,9 +63,3 @@ void drive_backward(int duration)
 	turn_off(R_MOTORS2_PIN);
 
 }
-
-
-
-
-
-
