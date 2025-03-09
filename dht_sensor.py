@@ -8,9 +8,9 @@ dht_lib.read_dht.restype = ctypes.c_int
 
 class DHTSensor:
     def __init__(self):
-        pass
+        self.dht_lib = dht_lib
 
-    def read_dht():
+    def read_dht(self):
         """Calls the C function to get temperature and humidity."""
         temperature = ctypes.c_float()
         humidity = ctypes.c_float()

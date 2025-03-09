@@ -1,13 +1,25 @@
 import ctypes
 
-ultrasonic_lib = ctypes.CDLL("./libdht.so")
+from breezyslam.sensors import Sensor
 
-ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_float)]
-ultrasonic_lib.read_ultrasonic.restype = None
-
-class UltrasonicSensor:
+class UltrasonicSensor(Sensor):
     def __init__(self):
-        pass
+        # Initialize as a Sensor for BreezySLAM with parameters:
+        # detection_angle_degrees: total field of view in degrees
+        # distance_no_detection_mm: maximum distance reading
+        # detection_margin: offset from distance measurement
+        # offset_mm: sensor position offset
+        Sensor.__init__(self, 
+                       detection_angle_degrees=30,  # Ultrasonic FOV
+                       distance_no_detection_mm=5000,  # Max distance to report
+                       detection_margin=70,  # Offset from actual distance
+                       offset_mm=0)  # Sensor position offset
+        
+        # Load the C library
+        self.ultrasonic_lib = ctypes.CDLL("./libultrasonic.so")
+        self.ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_ulong)]
+        self.ultrasonic_lib.read_ultrasonic.restype = None
+        self.distance = 0
 
     def read_ultrasonic(self, distance_ref=None):
         # Create a ctypes float to hold the result

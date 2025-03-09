@@ -18,11 +18,11 @@ class RobotSLAM:
     def __init__(self, map_size_pixels=800, map_size_meters=20):
         
         # Initialize sensor and SLAM objects
-        self.sensor = ultrasonic_sensor.UltrasonicSensor()
+        self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
         # Create SLAM object
         self.slam = RMHC_SLAM(
-            self.sensor,                # Sensor model
+            self.utSensor,                # Sensor model
             map_size_pixels,           # Map size in pixels
             map_size_meters,           # Map size in meters
             map_quality=5              # Map quality (lower for faster performance)
@@ -45,8 +45,9 @@ class RobotSLAM:
         self.map_size_pixels = map_size_pixels
     
         # this is for other readings.
-        self.dht_data = bytearray(map_size_pixels * map_size_pixels)
-
+        # Initialize data structures for temperature and humidity
+        self.temp_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
+        self.humidity_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
     
     def update_odometry(self, dt_seconds):
         """
@@ -96,15 +97,14 @@ class RobotSLAM:
             current_time = time.time()
             dt = current_time - last_time
             last_time = current_time
-            distance = 0
             # Get scan from the ultrasonic sensor -> what is scan supposed to be? can we pass in distance into the update function
-            self.sensor.read_ultrasonic(distance)
+            distance = self.utSensor.read_ultrasonic()
             # if distance is ceratin value, move directions
             if distance <= 500:
                 # Turn right when obstacle detected
                 self.turn_right()
 
-            scan = self.sensor.get_scan() 
+            scan = self.utSensor.get_scan() 
 
             self.update_odometry(dt)
 
@@ -127,7 +127,12 @@ class RobotSLAM:
             
             # Store the value in your parallel array
             if 0 <= index < len(self.dht_data):
-                self.dht_data[index] = dht_value
+            # Read DHT sensor data
+                dht_data = self.dhtSensor.read_dht()
+                
+                # Store the temperature and humidity in the respective maps
+                self.temp_data[map_y, map_x] = dht_data["temperature"]
+                self.humidity_data[map_y, map_x] = dht_data["humidity"]
             # Get the map
             self.slam.getmap(self.mapbytes)
             
