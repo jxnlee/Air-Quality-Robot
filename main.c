@@ -5,6 +5,7 @@
 #include "dht.h"
 #include "ultrasonic.h"
 #include "pms.h"
+#include "l298n.h"
 
 int main(int argc, char* argv[])
 {
@@ -20,9 +21,13 @@ int main(int argc, char* argv[])
 	float humidity;
 	long distance;
 	PM25_Data pms5003_data;
+	init_l298n();
+	set_motors_speed(255);
+
+	int running = 1;
 
 	// Main program loop
-	while (1)
+	while (running)
 	{
 		/*if (read_dht(&temperature, &humidity))
 		{
@@ -32,6 +37,7 @@ int main(int argc, char* argv[])
 		else delay(1000);*/
 		// read_ultrasonic(&distance);
 		// printf("Ultrasonic Distance Measurement: %ldcm\n", distance);
+		/*
 		if (read_pms(&pms5003_data))
 		{
 			print_pms_readings(&pms5003_data);
@@ -40,8 +46,18 @@ int main(int argc, char* argv[])
 		{
 			printf("ERROR READING PM2.5!!!\n");
 		}
+		delay(1000);*/
+		
+		drive_forward(1000);
+		
 		delay(1000);
+
+		drive_backward(1000);
+		
+		delay(1000);
+
 	}
 	close_pms();
+	motors_off();
 	return 0;
 }
