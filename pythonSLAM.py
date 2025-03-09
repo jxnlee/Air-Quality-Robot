@@ -8,7 +8,8 @@ import time
 import math
 from threading import Thread
 import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
-
+import ultrasonic_sensor
+import dht_sensor
 
 class RobotSLAM:
     """
@@ -17,8 +18,8 @@ class RobotSLAM:
     def __init__(self, map_size_pixels=800, map_size_meters=20):
         
         # Initialize sensor and SLAM objects
-        self.sensor = UltrasonicSensor()
-        
+        self.sensor = ultrasonic_sensor.UltrasonicSensor()
+        self.dhtSensor = dht_sensor.DHTSensor()
         # Create SLAM object
         self.slam = RMHC_SLAM(
             self.sensor,                # Sensor model
@@ -26,7 +27,7 @@ class RobotSLAM:
             map_size_meters,           # Map size in meters
             map_quality=5              # Map quality (lower for faster performance)
         )
-        
+        self.direction = 0
         # Initialize map
         self.mapbytes = bytearray(map_size_pixels * map_size_pixels)
         
@@ -44,42 +45,49 @@ class RobotSLAM:
         self.map_size_pixels = map_size_pixels
     
         # this is for other readings.
-        dht_data = bytearray(map_size_pixels * map_size_pixels)
+        self.dht_data = bytearray(map_size_pixels * map_size_pixels)
 
     
     def update_odometry(self, dt_seconds):
         """
-        Update robot pose estimation based on accelerometer data
-        This is a very simplified odometry model
+        Update robot pose estimation based on velocity and direction
+        This is a simplified odometry model for constant velocity movement
         """
-        # not sure how to port it
-        accel_x, accel_y, _ = read_accelerometer()
+        # Use velocity instead of acceleration
+        # These values would come from your motor control settings
+        velocity_x = 100  # mm/s - forward velocity
+        velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
+        
+        # Update the pose angle based on the direction counter
+        self.pose[2] = self.direction * 90  # Convert direction to degrees
         
         # Get current orientation
         theta_rad = math.radians(self.pose[2])
         
         # Convert from robot frame to world frame
-        world_accel_x = accel_x * math.cos(theta_rad) - accel_y * math.sin(theta_rad)
-        world_accel_y = accel_x * math.sin(theta_rad) + accel_y * math.cos(theta_rad)
+        world_vel_x = velocity_x * math.cos(theta_rad) - velocity_y * math.sin(theta_rad)
+        world_vel_y = velocity_x * math.sin(theta_rad) + velocity_y * math.cos(theta_rad)
         
-        # Basic physics: distance = 0.5 * a * t^2
-        dx_mm = 0.5 * world_accel_x * dt_seconds * dt_seconds * 1000  # Convert to mm
-        dy_mm = 0.5 * world_accel_y * dt_seconds * dt_seconds * 1000  # Convert to mm
+        # Distance = velocity * time
+        dx_mm = world_vel_x * dt_seconds  # mm
+        dy_mm = world_vel_y * dt_seconds  # mm
         
         # Update pose
         self.pose[0] += dx_mm
         self.pose[1] += dy_mm
-        
-        # For a more accurate implementation, you would:
-        # 1. Use a proper motion model
-        # 2. Include wheel encoder data if available
-        # 3. Implement a complementary or Kalman filter
         
         # Save to trajectory (in map coordinates)
         map_x = self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
         map_y = self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
         self.trajectory.append([map_x, map_y])
     
+
+    def turn_right(self):
+        """Turn the robot 90 degrees to the right"""
+        self.direction = (self.direction + 1) % 4
+        print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 90}°)")
+        time.sleep(0.5)  # Simulate turn time
+
     def mapping_loop(self):
         """Main loop for mapping"""
         last_time = time.time()
@@ -88,12 +96,18 @@ class RobotSLAM:
             current_time = time.time()
             dt = current_time - last_time
             last_time = current_time
-            
-            # Update odometry based on accelerometer
+            distance = 0
+            # Get scan from the ultrasonic sensor -> what is scan supposed to be? can we pass in distance into the update function
+            self.sensor.read_ultrasonic(distance)
+            # if distance is ceratin value, move directions
+            if distance <= 500:
+                # Turn right when obstacle detected
+                self.turn_right()
+
+            scan = self.sensor.get_scan() 
+
             self.update_odometry(dt)
-            
-            # Get scan from the ultrasonic sensor
-            scan = self.sensor.get_scan()
+
             
             # Update SLAM with current scan and odometry
             self.slam.update(scan, pose_change=self.pose)
@@ -109,10 +123,10 @@ class RobotSLAM:
             index = map_y * self.map_size_pixels + map_x
             
             # TODO: either create multiple arrays or use a 3d array or a numpy array to hold multiple data.         
-            dht_value = self.read_dht()
+            dht_value = self.dhtSensor.read_dht()
             
             # Store the value in your parallel array
-            if 0 <= index < len(self.sensor_data):
+            if 0 <= index < len(self.dht_data):
                 self.dht_data[index] = dht_value
             # Get the map
             self.slam.getmap(self.mapbytes)

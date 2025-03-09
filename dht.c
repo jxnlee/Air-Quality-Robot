@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdint.h>
 #include "dht.h"
 #include "head.h"
 
@@ -5,7 +7,9 @@
 
 
 int data[5] = { 0, 0, 0, 0, 0 };
- 
+
+__attribute__((visibility("default")))
+
 int read_dht(float* temperature, float* humidity)
 {
 	uint8_t laststate	= HIGH;
