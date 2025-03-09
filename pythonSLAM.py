@@ -14,7 +14,6 @@ class RobotSLAM:
     """
     Class for managing SLAM with a robot equipped with ultrasonic sensor
     """
-    
     def __init__(self, map_size_pixels=800, map_size_meters=20):
         
         # Initialize sensor and SLAM objects
@@ -44,6 +43,9 @@ class RobotSLAM:
         self.pixels_per_meter = map_size_pixels / map_size_meters
         self.map_size_pixels = map_size_pixels
     
+        # this is for other readings.
+        dht_data = bytearray(map_size_pixels * map_size_pixels)
+
     
     def update_odometry(self, dt_seconds):
         """
@@ -98,7 +100,20 @@ class RobotSLAM:
             
             # Get current pose estimate from SLAM
             self.pose[0], self.pose[1], self.pose[2] = self.slam.getpos()
+
+            # Get current position in map coordinates
+            map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+            map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             
+            # Calculate index in the flat array
+            index = map_y * self.map_size_pixels + map_x
+            
+            # TODO: either create multiple arrays or use a 3d array or a numpy array to hold multiple data.         
+            dht_value = self.read_dht()
+            
+            # Store the value in your parallel array
+            if 0 <= index < len(self.sensor_data):
+                self.dht_data[index] = dht_value
             # Get the map
             self.slam.getmap(self.mapbytes)
             
