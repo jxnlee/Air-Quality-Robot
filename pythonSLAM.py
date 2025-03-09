@@ -51,6 +51,10 @@ class RobotSLAM:
         # Initialize data structures for temperature and humidity
         self.temp_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
         self.humidity_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
+
+        # TODO: set it to a sensible value
+        self.tempThreshold = 30
+        self.reVisit = []
     
     def update_odometry(self, dt_seconds):
         """
@@ -135,6 +139,8 @@ class RobotSLAM:
                 # Store the temperature and humidity in the respective maps
                 self.temp_data[map_y, map_x] = dht_data["temperature"]
                 self.humidity_data[map_y, map_x] = dht_data["humidity"]
+                if dht_data["temperature"] > self.tempThreshold:
+                    self.reVisit.append([map_x, map_y])
             # Get the map
             self.slam.getmap(self.mapbytes)
             
@@ -147,36 +153,125 @@ class RobotSLAM:
         self.mapping_thread.daemon = True
         self.mapping_thread.start()
         print("SLAM system started")
-    
+        
     def stop(self):
         """Stop the mapping thread"""
         self.is_running = False
         if hasattr(self, 'mapping_thread'):
             self.mapping_thread.join(timeout=1.0)
+        if hasattr(self, 'position_thread'):
+            self.position_thread.join(timeout=1.0)
         
-        # Clean up GPIO
-        GPIO.cleanup()
         print("SLAM system stopped")
     
-    def visualize_map(self):
-        """Visualize the current map and trajectory"""
-        # Convert the map to a numpy array
-        map_array = np.reshape(np.frombuffer(self.mapbytes, dtype=np.uint8),
-                              (self.map_size_pixels, self.map_size_pixels))
+    # def visualize_map(self):
+    #     """Visualize the current map and trajectory"""
+    #     # Convert the map to a numpy array
+    #     map_array = np.reshape(np.frombuffer(self.mapbytes, dtype=np.uint8),
+    #                           (self.map_size_pixels, self.map_size_pixels))
         
-        # Display the map
-        plt.figure(figsize=(10, 10))
-        plt.imshow(map_array, cmap='gray', origin='lower')
+    #     # Display the map
+    #     plt.figure(figsize=(10, 10))
+    #     plt.imshow(map_array, cmap='gray', origin='lower')
         
-        # Plot trajectory
-        if len(self.trajectory) > 1:
-            trajectory = np.array(self.trajectory)
-            plt.plot(trajectory[:, 0], trajectory[:, 1], 'r-', linewidth=1)
-            plt.plot(trajectory[-1, 0], trajectory[-1, 1], 'ro', markersize=5)
+    #     # Plot trajectory
+    #     if len(self.trajectory) > 1:
+    #         trajectory = np.array(self.trajectory)
+    #         plt.plot(trajectory[:, 0], trajectory[:, 1], 'r-', linewidth=1)
+    #         plt.plot(trajectory[-1, 0], trajectory[-1, 1], 'ro', markersize=5)
         
-        plt.title('BreezySLAM Map and Robot Trajectory')
-        plt.savefig('breezyslam_map.png')
-        plt.show()
+    #     plt.title('BreezySLAM Map and Robot Trajectory')
+    #     plt.savefig('breezyslam_map.png')
+    #     plt.show()
+
+    def cleanUp(self):
+        # might want to start from last index tho.
+        i = 0
+        while i < len(self.reVisit):
+            # just traversing it like this should be close to optimal most of the time, since we're appending to the array, so each location is next to one another.
+            x1 = self.reVisit[i][0]  # Fixed indexing here
+            y1 = self.reVisit[i][1]  # Fixed indexing here
+            self.navigateTo(x1, y1)
+            i+=1
+
+    def navigateTo(self, target_x, target_y):  # Added self parameter and renamed to avoid confusion
+        # Get current position in map coordinates
+        map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+        map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+        
+        print(f"Navigating from ({map_x}, {map_y}) to ({target_x}, {target_y})")
+        
+        # First handle x-coordinate navigation
+        while abs(map_x - target_x) > 5:  # Using a threshold of 5 pixels
+            if map_x < target_x:
+                # Need to move right (east)
+                target_direction = 0  # East
+            else:
+                # Need to move left (west)
+                target_direction = 2  # West
+                
+            # Turn to the target direction
+            while self.direction != target_direction:
+                self.turn()
+                
+            # Drive forward
+            self.l298nAct.drive_forward()
+            time.sleep(0.5)  # Drive for a short time
+            self.l298nAct.stop()
+            
+            # Update current position
+            map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+            map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+        
+        # Then handle y-coordinate navigation
+        while abs(map_y - target_y) > 5:  # Using a threshold of 5 pixels
+            if map_y < target_y:
+                # Need to move up (north)
+                target_direction = 1  # North
+            else:
+                # Need to move down (south)
+                target_direction = 3  # South
+                
+            # Turn to the target direction
+            while self.direction != target_direction:
+                self.turn()
+                
+            # Drive forward
+            self.l298nAct.drive_forward()
+            time.sleep(0.5)  # Drive for a short time
+            self.l298nAct.stop()
+            
+            # Update current position
+            map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+            map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+        
+        print(f"Reached destination ({target_x}, {target_y})")
+
+
+    def position_tracking_loop(self):
+        """Track position without mapping new areas"""
+        last_time = time.time()
+        
+        while self.is_running:
+            current_time = time.time()
+            dt = current_time - last_time
+            last_time = current_time
+            
+            # Get scan from the ultrasonic sensor
+            scan = self.utSensor.get_scan() 
+            
+            # Update SLAM with current scan and odometry
+            self.slam.update(scan, pose_change=self.pose)
+            
+            # Get current pose estimate from SLAM
+            self.pose[0], self.pose[1], self.pose[2] = self.slam.getpos()
+            
+            # Update trajectory for visualization
+            map_x = self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
+            map_y = self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
+            self.trajectory.append([map_x, map_y])
+            
+            time.sleep(0.1)  # Run at 10Hz
 
 
 # Main function
@@ -185,24 +280,45 @@ def main():
     slam = RobotSLAM(map_size_pixels=800, map_size_meters=20)
     
     try:
-        # Start SLAM
+        # Start SLAM with full mapping
         slam.start()
         
-        # Run for 60 seconds
-        print("Running BreezySLAM for 60 seconds...")
+        # Run mapping for 60 seconds
+        print("Mapping in progress...")
         for i in range(60):
             time.sleep(1)
-            print(f"Mapping in progress... {i+1}/60 seconds")
+            print(f"Mapping: {i+1}/60 seconds")
         
-    except KeyboardInterrupt:
-        print("Mapping interrupted by user")
-    
-    finally:
-        # Stop SLAM
-        slam.stop()
+        # Stop mapping loop
+        slam.is_running = False
+        if hasattr(slam, 'mapping_thread'):
+            slam.mapping_thread.join(timeout=1.0)
         
         # Visualize the map
-        slam.visualize_map()
+        # slam.visualize_map()
+        
+        # Start just position tracking (not full mapping)
+        slam.is_running = True
+        slam.position_thread = Thread(target=slam.position_tracking_loop)
+        slam.position_thread.daemon = True
+        slam.position_thread.start()
+        
+        # Now navigate to important points
+        print("Navigating to hotspots...")
+        slam.cleanUp()
+        
+        # Stop position tracking
+        slam.is_running = False
+        slam.position_thread.join(timeout=1.0)
+        
+    except KeyboardInterrupt:
+        print("Process interrupted by user")
+    
+    finally:
+        # Make sure everything is cleaned up
+        slam.is_running = False
+        slam.l298nAct.stop()  # Stop motors
+        GPIO.cleanup()
 
 
 if __name__ == "__main__":
