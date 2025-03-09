@@ -19,10 +19,11 @@ class RobotSLAM:
     """
     def __init__(self, map_size_pixels=800, map_size_meters=20):
         
-        # Initialize sensor and SLAM objects
+        # Initialize sensors, actuators, and SLAM objects
         self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
         self.l298nAct = l298n_act.L298N()
+
         # Create SLAM object
         self.slam = RMHC_SLAM(
             self.utSensor,                # Sensor model
@@ -30,6 +31,7 @@ class RobotSLAM:
             map_size_meters,           # Map size in meters
             map_quality=5              # Map quality (lower for faster performance)
         )
+
         self.direction = 0
         # Initialize map
         self.mapbytes = bytearray(map_size_pixels * map_size_pixels)
@@ -132,7 +134,7 @@ class RobotSLAM:
             index = map_y * self.map_size_pixels + map_x
             
             # Store the value in your parallel array
-            if 0 <= index < len(self.dht_data):
+            if 0 <= index < len(self.temp_data):
             # Read DHT sensor data
                 dht_data = self.dhtSensor.read_dht()
                 
@@ -249,17 +251,17 @@ class RobotSLAM:
 
 
     def position_tracking_loop(self):
-        """Track position without mapping new areas"""
+        """Track position without mapping new areas"""   
         last_time = time.time()
-        
+     
         while self.is_running:
             current_time = time.time()
             dt = current_time - last_time
             last_time = current_time
-            
             # Get scan from the ultrasonic sensor
             scan = self.utSensor.get_scan() 
-            
+            # time
+            self.update_odometry(dt)
             # Update SLAM with current scan and odometry
             self.slam.update(scan, pose_change=self.pose)
             
