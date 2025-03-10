@@ -11,6 +11,7 @@ import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
 import ultrasonic_sensor
 import dht_sensor
 import l298n_act
+import fan_act
 import body_threads
 
 DEFAULT_SPD = 255
@@ -29,6 +30,7 @@ class RobotSLAM:
         self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
         self.l298nAct = l298n_act.L298N()
+        self.fanSensor = fan_act.Fan()
 
         # Create SLAM object
         self.slam = RMHC_SLAM(
@@ -60,7 +62,8 @@ class RobotSLAM:
         self.temp_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
         self.humidity_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
 
-        # TODO: set it to a sensible value
+
+        # TODO: set it to a sensible value, check more than just temperature
         self.tempThreshold = 30
         self.reVisit = []
     
@@ -71,6 +74,7 @@ class RobotSLAM:
         """
         # Use velocity instead of acceleration
         # These values would come from your motor control settings
+        # experiement with velocity value, not just spd
         velocity_x = 100  # mm/s - forward velocity
         velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
         
@@ -106,9 +110,8 @@ class RobotSLAM:
         time.sleep(0.5)  # Simulate turn time
 
     def mapping_loop(self):
-        """Main loop for mapping"""
         last_time = time.time()
-        
+        turnInc = 10
         while self.is_running:
             current_time = time.time()
             dt = current_time - last_time
@@ -116,11 +119,19 @@ class RobotSLAM:
             # Get scan from the ultrasonic sensor -> what is scan supposed to be? can we pass in distance into the update function
             distance = self.utSensor.read_ultrasonic()
             # if distance is ceratin value, move directions
-            if distance <= 500:
+            if distance <= 50:
                 # Turn right when obstacle detected
+                self.turn()
+                turnInc = 10
+            elif distance <= turnInc:
+                # turn...
+                # increase inc value.
+                # try to simulate a spiral
+                turnInc+=10
                 self.turn()
             else:
                 self.l298nAct.drive_forward(spd)
+
             scan = self.utSensor.get_scan() 
 
             self.update_odometry(dt)
@@ -129,17 +140,13 @@ class RobotSLAM:
             # Update SLAM with current scan and odometry
             self.slam.update(scan, pose_change=self.pose)
             
-            # Get current pose estimate from SLAM
             self.pose[0], self.pose[1], self.pose[2] = self.slam.getpos()
 
-            # Get current position in map coordinates
             map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             
-            # Calculate index in the flat array
             index = map_y * self.map_size_pixels + map_x
             
-            # Store the value in your parallel array
             if 0 <= index < len(self.temp_data):
             # Read DHT sensor data
                 dht_data = self.dhtSensor.read_dht()
@@ -152,7 +159,7 @@ class RobotSLAM:
             # Get the map
             self.slam.getmap(self.mapbytes)
             
-            time.sleep(0.1)  # Run at 10Hz
+            time.sleep(0.1)
     
     def start(self):
         """Start the mapping thread"""
@@ -200,6 +207,12 @@ class RobotSLAM:
             x1 = self.reVisit[i][0]  # Fixed indexing here
             y1 = self.reVisit[i][1]  # Fixed indexing here
             self.navigateTo(x1, y1)
+            # actuate the fan.
+            
+            self.fanSensor.start_fan
+            # sleep for a few seconds, can also use while loop to do the thing.
+            time.sleep(2)
+            self.fanSensor.stop_fan
             i+=1
 
     def navigateTo(self, target_x, target_y):  # Added self parameter and renamed to avoid confusion
@@ -210,7 +223,14 @@ class RobotSLAM:
         print(f"Navigating from ({map_x}, {map_y}) to ({target_x}, {target_y})")
         
         # First handle x-coordinate navigation
-        while abs(map_x - target_x) > 5:  # Using a threshold of 5 pixels
+        while abs(map_x - target_x) > 5:  # Using a threshold of 5 pixels'
+
+            # read ultrasonic, if something is in front, turn right twice, then move forward for half a second, until
+            distance = self.utSensor.read_ultrasonic()
+            if distance < 10:
+                self.l298nAct.drive_left_backward(spd)
+                time.sleep(0.2)
+                self.l298nAct.stop()
             if map_x < target_x:
                 # Need to move right (east)
                 target_direction = 0  # East
@@ -233,6 +253,11 @@ class RobotSLAM:
         
         # Then handle y-coordinate navigation
         while abs(map_y - target_y) > 5:  # Using a threshold of 5 pixels
+            distance = self.utSensor.read_ultrasonic()
+            if distance < 10:
+                self.l298nAct.drive_left_backward(spd)
+                time.sleep(0.2)
+                self.l298nAct.stop()
             if map_y < target_y:
                 # Need to move up (north)
                 target_direction = 1  # North
@@ -245,7 +270,7 @@ class RobotSLAM:
                 self.turn()
                 
             # Drive forward
-            self.l298nAct.drive_forward(duration)
+            self.l298nAct.drive_forward(spd)
             time.sleep(0.5)  # Drive for a short time
             self.l298nAct.stop()
             
