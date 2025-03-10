@@ -22,44 +22,45 @@ void set_motors_speed(uint8_t speed)
 
 void motors_off()
 {
-	set_motors_speed(0);
+	turn_off(L_MOTORS1_PIN);
+	turn_off(L_MOTORS2_PIN);
+	turn_off(R_MOTORS1_PIN);
+	turn_off(R_MOTORS2_PIN);
 }
 
-void drive_left(int duration)
+void drive_left_forward(uint8_t speed)
 {
+	softPwmWrite(L_MOTORS_SPD_PIN, speed);
 	turn_on(L_MOTORS1_PIN);
 	turn_off(L_MOTORS2_PIN);
-	delay(duration);
-	turn_off(L_MOTORS1_PIN);
 }
-void drive_right(int duration)
+void drive_left_backward(uint8_t speed)
 {
-	turn_on(R_MOTORS1_PIN);
-	turn_off(R_MOTORS2_PIN);
-	delay(duration);
-	turn_off(R_MOTORS1_PIN);
-}
-
-void drive_forward(int duration)
-{
-	turn_on(L_MOTORS1_PIN);
-	turn_on(R_MOTORS1_PIN);
-	turn_off(L_MOTORS2_PIN);
-	turn_off(R_MOTORS2_PIN);
-	delay(duration);
-	turn_off(L_MOTORS1_PIN);
-	turn_off(R_MOTORS1_PIN);
-
-}
-
-void drive_backward(int duration)
-{
+	softPwmWrite(L_MOTORS_SPD_PIN, speed);
 	turn_on(L_MOTORS2_PIN);
-	turn_on(R_MOTORS2_PIN);
 	turn_off(L_MOTORS1_PIN);
-	turn_off(R_MOTORS1_PIN);
-	delay(duration);
-	turn_off(L_MOTORS2_PIN);
+}
+void drive_right_forward(uint8_t speed)
+{
+	softPwmWrite(R_MOTORS_SPD_PIN, speed);
+	turn_on(R_MOTORS1_PIN);
 	turn_off(R_MOTORS2_PIN);
+}
+void drive_right_backward(uint8_t speed)
+{
+	softPwmWrite(R_MOTORS_SPD_PIN, speed);
+	turn_on(R_MOTORS2_PIN);
+	turn_off(R_MOTORS1_PIN);
+}
 
+void drive_forward(uint8_t speed)
+{
+	drive_left_forward(speed);
+	drive_right_forward(speed);
+}
+
+void drive_backward(uint8_t speed)
+{
+	drive_left_backward(speed);
+	drive_right_backward(speed);
 }

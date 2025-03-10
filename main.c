@@ -46,14 +46,6 @@ int main(int argc, char* argv[])
 			printf("ERROR READING PM2.5!!!\n");
 		}
 		delay(1000);*/
-		
-		drive_forward(1000);
-		
-		delay(1000);
-
-		drive_backward(1000);
-		
-		delay(1000);
 
 	}
 	close_pms();

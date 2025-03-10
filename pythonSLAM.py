@@ -11,6 +11,11 @@ import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
 import ultrasonic_sensor
 import dht_sensor
 import l298n_act
+import body_threads
+
+DEFAULT_SPD = 255
+spd = 255
+
 
 
 class RobotSLAM:
@@ -20,6 +25,7 @@ class RobotSLAM:
     def __init__(self, map_size_pixels=800, map_size_meters=20):
         
         # Initialize sensors, actuators, and SLAM objects
+        self.robot = body_threads.RobotThreads()
         self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
         self.l298nAct = l298n_act.L298N()
@@ -95,7 +101,7 @@ class RobotSLAM:
     def turn(self):
         """Turn the robot 90 degrees to the right"""
         self.direction = (self.direction + 1) % 4
-        self.l298nAct.turn_right()
+        self.l298nAct.turn_right(spd)
         print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 90}°)")
         time.sleep(0.5)  # Simulate turn time
 
@@ -114,7 +120,7 @@ class RobotSLAM:
                 # Turn right when obstacle detected
                 self.turn()
             else:
-                self.l298nAct.drive_forward()
+                self.l298nAct.drive_forward(spd)
             scan = self.utSensor.get_scan() 
 
             self.update_odometry(dt)
@@ -217,7 +223,7 @@ class RobotSLAM:
                 self.turn()
                 
             # Drive forward
-            self.l298nAct.drive_forward()
+            self.l298nAct.drive_forward(spd)
             time.sleep(0.5)  # Drive for a short time
             self.l298nAct.stop()
             
@@ -239,7 +245,7 @@ class RobotSLAM:
                 self.turn()
                 
             # Drive forward
-            self.l298nAct.drive_forward()
+            self.l298nAct.drive_forward(duration)
             time.sleep(0.5)  # Drive for a short time
             self.l298nAct.stop()
             

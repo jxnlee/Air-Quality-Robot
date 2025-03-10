@@ -15,7 +15,7 @@ class UltrasonicSensor(Laser):
         self.ultrasonic_lib = ctypes.CDLL("./ultrasonic.so")
         self.ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_ulong)]
         self.ultrasonic_lib.read_ultrasonic.restype = None
-        self.ultrasonic_lib.init_ultrasonic()
+        #self.ultrasonic_lib.init_ultrasonic()
         self.distance = 0
         
     def read_ultrasonic(self):
