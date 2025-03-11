@@ -159,15 +159,16 @@ class RobotSLAM:
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             
             index = map_y * self.map_size_pixels + map_x
-            
+            print("index is," index)
             if 0 <= index < len(self.temp_data):
             # Read DHT sensor data
                 #dht_data = self.dhtSensor.read_dht()
                 self.dhtSensor.read_dht()
                 # Store the temperature and humidity in the respective maps
-                self.temp_data[map_y, map_x] = self.dhtSensor.temperature#dht_data["temperature"]
-                self.humidity_data[map_y, map_x] = self.dhtSensor.humidity#dht_data["humidity"]
-                if dht_data["temperature"] > self.tempThreshold:
+                self.temp_data[map_x, map_y] = self.dhtSensor.temperature#dht_data["temperature"]
+                self.humidity_data[map_x, map_y] = self.dhtSensor.humidity#dht_data["humidity"]
+                print("temp", self.dhtSensor.temperature)
+                if self.dhtSensor.temperature > self.tempThreshold:
                     self.reVisit.append([map_x, map_y])
             # Get the map
             self.slam.getmap(self.mapbytes)
