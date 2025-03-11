@@ -138,8 +138,8 @@ class RobotSLAM:
               #  self.turn()
             else:
                 # TODO: change counter value, not sure how many times it will run.
-                if counter >= 100:
-                    self.l298nAct.drive_right_backward()
+                if counter >= 50:
+                    self.l298nAct.drive_right_backward(spd)
                     time.sleep(0.2)
                     counter = 0
                 self.l298nAct.drive_forward(spd)
@@ -191,25 +191,25 @@ class RobotSLAM:
         
         print("SLAM system stopped")
     
-    # def visualize_map(self):
-    #     """Visualize the current map and trajectory"""
-    #     # Convert the map to a numpy array
-    #     map_array = np.reshape(np.frombuffer(self.mapbytes, dtype=np.uint8),
-    #                           (self.map_size_pixels, self.map_size_pixels))
+    def visualize_map(self):
+         """Visualize the current map and trajectory"""
+         # Convert the map to a numpy array
+         map_array = np.reshape(np.frombuffer(self.mapbytes, dtype=np.uint8),
+                               (self.map_size_pixels, self.map_size_pixels))
         
-    #     # Display the map
-    #     plt.figure(figsize=(10, 10))
-    #     plt.imshow(map_array, cmap='gray', origin='lower')
+         # Display the map
+         plt.figure(figsize=(10, 10))
+         plt.imshow(map_array, cmap='gray', origin='lower')
         
-    #     # Plot trajectory
-    #     if len(self.trajectory) > 1:
-    #         trajectory = np.array(self.trajectory)
-    #         plt.plot(trajectory[:, 0], trajectory[:, 1], 'r-', linewidth=1)
-    #         plt.plot(trajectory[-1, 0], trajectory[-1, 1], 'ro', markersize=5)
+         # Plot trajectory
+         if len(self.trajectory) > 1:
+             trajectory = np.array(self.trajectory)
+             plt.plot(trajectory[:, 0], trajectory[:, 1], 'r-', linewidth=1)
+             plt.plot(trajectory[-1, 0], trajectory[-1, 1], 'ro', markersize=5)
         
-    #     plt.title('BreezySLAM Map and Robot Trajectory')
-    #     plt.savefig('breezyslam_map.png')
-    #     plt.show()
+         plt.title('BreezySLAM Map and Robot Trajectory')
+         plt.savefig('breezyslam_map.png')
+         plt.show()
 
     def cleanUp(self):
         # might want to start from last index tho.
@@ -340,7 +340,7 @@ def main():
             slam.mapping_thread.join(timeout=1.0)
         
         # Visualize the map
-        # slam.visualize_map()
+        slam.visualize_map()
         
         # Start just position tracking (not full mapping)
         slam.is_running = True
