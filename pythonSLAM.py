@@ -159,8 +159,11 @@ class RobotSLAM:
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             
             index = map_y * self.map_size_pixels + map_x
-            print("index is," index)
-            if 0 <= index < len(self.temp_data):
+            # another potential fix, if it just never reads.
+            # map_x = max(0, min(map_x, self.map_size_pixels - 1))
+            # map_y = max(0, min(map_y, self.map_size_pixels - 1))
+
+            if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
             # Read DHT sensor data
                 #dht_data = self.dhtSensor.read_dht()
                 self.dhtSensor.read_dht()
