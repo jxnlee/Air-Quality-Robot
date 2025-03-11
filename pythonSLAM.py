@@ -105,7 +105,7 @@ class RobotSLAM:
     def turn(self):
         """Turn the robot 90 degrees to the right"""
         self.direction = (self.direction + 1) % 4
-        self.l298nAct.turn_right(spd)
+        self.l298nAct.turn_right(2*spd)
         print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 90}°)")
         time.sleep(0.5)  # Simulate turn time
 
@@ -122,7 +122,7 @@ class RobotSLAM:
             # if distance is ceratin value, move directions
             if distance == -1:
                 continue
-            if distance <= 20:
+            if distance <= 250:
                 
                 # Turn right when obstacle detected
                 self.turn()

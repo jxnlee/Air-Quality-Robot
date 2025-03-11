@@ -61,14 +61,16 @@ class L298N:
     # for turning
     def turn_left(self, speed=50):
         self.drive_left_forward(speed)
-        self.drive_right_backward(speed)
+        self.drive_right_backward(int(0.5*speed))
+        #self.drive_right_backward(0)
     
     def turn_right(self, speed=50):
         self.drive_right_forward(speed)
-        self.drive_left_backward(speed)
+        self.drive_left_backward(int(0.5* speed))
+        #self.drive_left_backward(0)
     
-    def move_forward(self, speed=80):
+    def move_forward(self, speed=60):
         self.drive_forward(speed)
     
-    def move_backward(self, speed=80):
+    def move_backward(self, speed=60):
         self.drive_backward(speed)
