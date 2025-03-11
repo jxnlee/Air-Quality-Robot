@@ -12,7 +12,8 @@ fan_lib.stop_fan.restype = None
 
 class Fan:
     def __init__(self):
-        pass
+        self.fan_lib = fan_lib
+        self.fan_lib.init_fan()
 
     def start_fan(self):
         self.fan_lib.start_fan()
