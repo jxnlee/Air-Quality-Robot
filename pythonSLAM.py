@@ -125,6 +125,8 @@ class RobotSLAM:
             if distance <= 250:
                 
                 # Turn right when obstacle detected
+                self.l298nAct.drive_left_backward(spd)
+                time.sleep(0.1)
                 self.turn()
                 turnInc = 10
            ## elif distance <= turnInc:
@@ -323,7 +325,7 @@ def main():
         # Run mapping for 60 seconds
         print("Mapping in progress...")
         for i in range(60):
-            time.sleep(1)
+            time.sleep(0.7)
             print(f"Mapping: {i+1}/60 seconds")
         
         # Stop mapping loop
