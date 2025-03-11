@@ -11,11 +11,11 @@ import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
 import ultrasonic_sensor
 import dht_sensor
 import l298n_act
-import fan_act
+#import fan_act
 import body_threads
 
 DEFAULT_SPD = 255
-spd = 255
+spd = 80
 
 
 
@@ -30,7 +30,7 @@ class RobotSLAM:
         self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
         self.l298nAct = l298n_act.L298N()
-        self.fanSensor = fan_act.Fan()
+        #self.fanSensor = fan_act.Fan()
 
         # Create SLAM object
         self.slam = RMHC_SLAM(
@@ -118,17 +118,19 @@ class RobotSLAM:
             last_time = current_time
             # Get scan from the ultrasonic sensor -> what is scan supposed to be? can we pass in distance into the update function
             distance = self.utSensor.read_ultrasonic()
+            print("distance", distance)
             # if distance is ceratin value, move directions
-            if distance <= 50:
+            if distance <= 20:
+                
                 # Turn right when obstacle detected
                 self.turn()
                 turnInc = 10
-            elif distance <= turnInc:
+           ## elif distance <= turnInc:
                 # turn...
                 # increase inc value.
                 # try to simulate a spiral
-                turnInc+=10
-                self.turn()
+             #   turnInc+=10
+              #  self.turn()
             else:
                 self.l298nAct.drive_forward(spd)
 
@@ -209,10 +211,10 @@ class RobotSLAM:
             self.navigateTo(x1, y1)
             # actuate the fan.
             
-            self.fanSensor.start_fan
+            #self.fanSensor.start_fan
             # sleep for a few seconds, can also use while loop to do the thing.
-            time.sleep(2)
-            self.fanSensor.stop_fan
+            #time.sleep(2)
+            #self.fanSensor.stop_fan
             i+=1
 
     def navigateTo(self, target_x, target_y):  # Added self parameter and renamed to avoid confusion

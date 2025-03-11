@@ -16,12 +16,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	init_ultrasonic();
-	float temperature;
-	float humidity;
+
 	long distance;
-	PM25_Data pms5003_data;
-	init_l298n();
-	set_motors_speed(255);
 
 	int running = 1;
 
@@ -34,8 +30,8 @@ int main(int argc, char* argv[])
 			delay(1000);
 		}
 		else delay(1000);*/
-		// read_ultrasonic(&distance);
-		// printf("Ultrasonic Distance Measurement: %ldcm\n", distance);
+		read_ultrasonic(&distance);
+		printf("Ultrasonic Distance Measurement: %ldcm\n", distance);
 		/*
 		if (read_pms(&pms5003_data))
 		{
@@ -48,7 +44,5 @@ int main(int argc, char* argv[])
 		delay(1000);*/
 
 	}
-	close_pms();
-	motors_off();
 	return 0;
 }
