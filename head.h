@@ -17,8 +17,8 @@
 
 // Pinout
 #define DHT_PIN			7
-#define TRIGGER_PIN		4
-#define ECHO_PIN		5
+#define TRIGGER_PIN		0
+#define ECHO_PIN		2
 #define L_MOTORS_SPD_PIN	23
 #define L_MOTORS1_PIN		25
 #define L_MOTORS2_PIN		24
@@ -27,7 +27,7 @@
 #define R_MOTORS_SPD_PIN	29
 
 // Helper Functions / Variables / Structs
-unsigned long pulseIn(int pin, int level);
+long long pulseIn(int pin, int level);
 
 // Defined Data Struct (Adafruit_PM25AQI)
 

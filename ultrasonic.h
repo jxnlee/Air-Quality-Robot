@@ -2,6 +2,6 @@
 #define _ULTRASONIC_
 
 void init_ultrasonic();
-void read_ultrasonic(unsigned long* distance);
+void read_ultrasonic(long* distance);
 
 #endif
