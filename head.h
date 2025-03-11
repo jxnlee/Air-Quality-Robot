@@ -19,7 +19,7 @@
 #define DHT_PIN			7
 #define TRIGGER_PIN		0
 #define ECHO_PIN		2
-#define FAN_PIN         4
+#define FAN_PIN         1
 #define NION_GEN_PIN    5
 #define L_MOTORS_SPD_PIN	23
 #define L_MOTORS1_PIN		25

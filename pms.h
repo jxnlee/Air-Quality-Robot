@@ -28,9 +28,9 @@ typedef struct {
 
 int init_pms();
 
-int read_pms(PM25_Data* data);
+int read_pms(uint16_t* particles);
 
-void print_pms_readings(PM25_Data* data);
+void print_pms_readings();
 
 uint16_t pm25_aqi_us(float concentration);
 uint16_t pm100_aqi_us(float concentration);

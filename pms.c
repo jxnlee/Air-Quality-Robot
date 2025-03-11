@@ -10,6 +10,8 @@ const char PMS_SERIAL_PORT[] = "/dev/ttyUSB0";
 
 static int serial_port;
 
+static PM25_Data* data;
+
 int init_pms()
 {
 	if ((serial_port = serialOpen(PMS_SERIAL_PORT, PMS_BAUDRATE)) < 0)
@@ -24,7 +26,7 @@ int init_pms()
 	}
 }
 
-int read_pms(PM25_Data* data)
+int read_pms(uint16_t* particles)
 {
 	if (!data) return 0;
 	uint8_t buffer[32];
@@ -49,21 +51,11 @@ int read_pms(PM25_Data* data)
 	memcpy((void*) data, (void*) buffer_u16, 30);
 		
 	if (sum != data->checksum) return 0;
-		/*
-		data->pm10_standard = (buffer[10] << 8) | buffer[11];
-		data->pm25_standard = (buffer[12] << 8) | buffer[13];
-		data->pm100_standard = (buffer[14] << 8) | buffer[15];
-		data->pm10_env = (buffer[16] << 8) | buffer[17];
-		data->pm25_env = (buffer[18] << 8) | buffer[19];
-		data->pm100_env = (buffer[20] << 8) | buffer[21];
-		data->particles_03um = (buffer[22] << 8) | buffer[23];
-		data->particles_05um = (buffer[24] << 8) | buffer[25];
-		data->particles_10um = (buffer[26] << 8) | buffer[27];
-		data->particles_25um = (buffer[28] << 8) | buffer[23];
-		data->particles_50um = (buffer[30] << 8) | buffer[25];
-		data->particles_100um = (buffer[26] << 8) | buffer[27];*/
 	data->aqi_pm25_us = pm25_aqi_us(data->pm25_env);
 	data->aqi_pm100_us = pm100_aqi_us(data->pm100_env);
+
+	*particles = data->particles_03um;
+
 	return 1;
 }
 uint16_t pm25_aqi_us(float concentration) {
@@ -122,7 +114,7 @@ float linear(uint16_t aqi_high, uint16_t aqi_low, float conc_high, float conc_lo
 		+ aqi_low;
 	}
 
-void print_pms_readings(PM25_Data* data)
+void print_pms_readings()
 {
 	printf("---------------------------------------\n");
   	printf("Concentration Units (standard)\n");
