@@ -64,7 +64,7 @@ class RobotSLAM:
 
 
         # TODO: set it to a sensible value, check more than just temperature
-        self.tempThreshold = 30
+        self.tempThreshold = 5#30
         self.reVisit = []
     
     def update_odometry(self, dt_seconds):
@@ -75,7 +75,7 @@ class RobotSLAM:
         # Use velocity instead of acceleration
         # These values would come from your motor control settings
         # experiement with velocity value, not just spd
-        velocity_x = 100  # mm/s - forward velocity
+        velocity_x = 350  # mm/s - forward velocity
         velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
         
         # Update the pose angle based on the direction counter
@@ -106,7 +106,7 @@ class RobotSLAM:
         """Turn the robot 90 degrees to the right"""
         self.direction = (self.direction + 1) % 4
         self.l298nAct.turn_right(2*spd)
-        print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 90}°)")
+        print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 22.5}°)")
         time.sleep(0.5)  # Simulate turn time
 
     def mapping_loop(self):
@@ -123,7 +123,7 @@ class RobotSLAM:
             if distance == -1:
                 continue
             counter+=1
-            if distance <= 250:
+            if distance <= 200:
                 
                 # Turn right when obstacle detected
                 self.l298nAct.drive_left_backward(spd)
@@ -140,7 +140,7 @@ class RobotSLAM:
                 # TODO: change counter value, not sure how many times it will run.
                 if counter >= 50:
                     self.l298nAct.drive_right_backward(spd)
-                    time.sleep(0.2)
+                    time.sleep(0.5)
                     counter = 0
                 self.l298nAct.drive_forward(spd)
 
@@ -161,11 +161,11 @@ class RobotSLAM:
             
             if 0 <= index < len(self.temp_data):
             # Read DHT sensor data
-                dht_data = self.dhtSensor.read_dht()
-                
+                #dht_data = self.dhtSensor.read_dht()
+                self.dhtSensor.read_dht()
                 # Store the temperature and humidity in the respective maps
-                self.temp_data[map_y, map_x] = dht_data["temperature"]
-                self.humidity_data[map_y, map_x] = dht_data["humidity"]
+                self.temp_data[map_y, map_x] = self.dhtSensor.temperature#dht_data["temperature"]
+                self.humidity_data[map_y, map_x] = self.dhtSensor.humidity#dht_data["humidity"]
                 if dht_data["temperature"] > self.tempThreshold:
                     self.reVisit.append([map_x, map_y])
             # Get the map
@@ -214,6 +214,8 @@ class RobotSLAM:
     def cleanUp(self):
         # might want to start from last index tho.
         i = 0
+        print("REVIST:")
+        print(self.reVisit)
         while i < len(self.reVisit):
             # just traversing it like this should be close to optimal most of the time, since we're appending to the array, so each location is next to one another.
             x1 = self.reVisit[i][0]  # Fixed indexing here

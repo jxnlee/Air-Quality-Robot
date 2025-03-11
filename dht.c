@@ -20,9 +20,9 @@ int read_dht(float* temperature, float* humidity)
 	data[0] = data[1] = data[2] = data[3] = data[4] = 0;
  
 	pinMode( DHT_PIN, OUTPUT );
-	digitalWrite( DHT_PIN, LOW );
+	turn_off(DHT_PIN);
 	delay( 18 );
-	digitalWrite( DHT_PIN, HIGH );
+	turn_on(DHT_PIN);
 	delayMicroseconds( 40 );
 	pinMode( DHT_PIN, INPUT );
  
@@ -66,7 +66,7 @@ int read_dht(float* temperature, float* humidity)
 		*temperature = temp + temp_dec / 10.0;
 		return 1;
 	}else  {
-		//printf( "Data not good, skip\n" );
+		printf( "Data not good, skip\n" );
 		return 0;
 	}
 }
