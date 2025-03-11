@@ -111,7 +111,7 @@ class RobotSLAM:
 
     def mapping_loop(self):
         last_time = time.time()
-        turnInc = 10
+        counter=0
         while self.is_running:
             current_time = time.time()
             dt = current_time - last_time
@@ -122,6 +122,7 @@ class RobotSLAM:
             # if distance is ceratin value, move directions
             if distance == -1:
                 continue
+            counter+=1
             if distance <= 250:
                 
                 # Turn right when obstacle detected
@@ -136,6 +137,10 @@ class RobotSLAM:
              #   turnInc+=10
               #  self.turn()
             else:
+                # TODO: change counter value, not sure how many times it will run.
+                if counter == 100:
+                    self.l298nAct.drive_right_backward()
+                    time.sleep(0.2)
                 self.l298nAct.drive_forward(spd)
 
             scan = self.utSensor.get_scan() 
@@ -324,8 +329,8 @@ def main():
         
         # Run mapping for 60 seconds
         print("Mapping in progress...")
-        for i in range(60):
-            time.sleep(0.7)
+        for i in range(40):
+            time.sleep(1)
             print(f"Mapping: {i+1}/60 seconds")
         
         # Stop mapping loop
