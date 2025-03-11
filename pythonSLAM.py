@@ -120,6 +120,8 @@ class RobotSLAM:
             distance = self.utSensor.read_ultrasonic()
             print("distance", distance)
             # if distance is ceratin value, move directions
+            if distance == -1:
+                continue
             if distance <= 20:
                 
                 # Turn right when obstacle detected

@@ -13,14 +13,14 @@ class UltrasonicSensor(Laser):
         
         # Load the ultrasonic library
         self.ultrasonic_lib = ctypes.CDLL("./ultrasonic.so")
-        self.ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_ulong)]
+        self.ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_long)]
         self.ultrasonic_lib.read_ultrasonic.restype = None
         #self.ultrasonic_lib.init_ultrasonic()
         self.distance = 0
         
     def read_ultrasonic(self):
         # Create a ctypes ulong to hold the result
-        distance_c = ctypes.c_ulong()
+        distance_c = ctypes.c_long()
         
         # Call the C function
         self.ultrasonic_lib.read_ultrasonic(ctypes.byref(distance_c))
