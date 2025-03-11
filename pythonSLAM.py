@@ -40,7 +40,9 @@ class RobotSLAM:
             map_quality=5              # Map quality (lower for faster performance)
         )
 
+        # helps us with orientation
         self.direction = 0
+        
         # Initialize map
         self.mapbytes = bytearray(map_size_pixels * map_size_pixels)
         
@@ -73,13 +75,12 @@ class RobotSLAM:
         This is a simplified odometry model for constant velocity movement
         """
         # Use velocity instead of acceleration
-        # These values would come from your motor control settings
-        # experiement with velocity value, not just spd
+        # came to 350 after testing and measuring on a carpet
         velocity_x = 350  # mm/s - forward velocity
         velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
         
         # Update the pose angle based on the direction counter
-        self.pose[2] = self.direction * 90  # Convert direction to degrees
+        self.pose[2] = self.direction * 90 
         
         # Get current orientation
         theta_rad = math.radians(self.pose[2])
@@ -101,10 +102,10 @@ class RobotSLAM:
         map_y = self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
         self.trajectory.append([map_x, map_y])
     
-
+    #90 degree turn
     def turn(self):
-        """Turn the robot 90 degrees to the right"""
         self.direction = (self.direction + 1) % 4
+        # turn faster than straight line
         self.l298nAct.turn_right(2*spd)
         print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 22.5}°)")
         time.sleep(0.5)  # Simulate turn time
@@ -116,16 +117,16 @@ class RobotSLAM:
             current_time = time.time()
             dt = current_time - last_time
             last_time = current_time
-            # Get scan from the ultrasonic sensor -> what is scan supposed to be? can we pass in distance into the update function
+            # Get scan from the ultrasonic sensor to mimic a lidar sensor
             distance = self.utSensor.read_ultrasonic()
             print("distance", distance)
-            # if distance is ceratin value, move directions
+
             if distance == -1:
                 continue
             counter+=1
+            # too close to an obstacle
             if distance <= 200:
-                
-                # Turn right when obstacle detected
+                # move away then turn
                 self.l298nAct.drive_left_backward(spd)
                 time.sleep(0.1)
                 self.turn()
@@ -137,7 +138,7 @@ class RobotSLAM:
              #   turnInc+=10
               #  self.turn()
             else:
-                # TODO: change counter value, not sure how many times it will run.
+                # add some randomness and a timeout by using counter.
                 if counter >= 50:
                     self.l298nAct.drive_right_backward(spd)
                     time.sleep(0.5)
