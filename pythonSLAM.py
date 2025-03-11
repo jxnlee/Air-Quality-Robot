@@ -138,9 +138,10 @@ class RobotSLAM:
               #  self.turn()
             else:
                 # TODO: change counter value, not sure how many times it will run.
-                if counter == 100:
+                if counter >= 100:
                     self.l298nAct.drive_right_backward()
                     time.sleep(0.2)
+                    counter = 0
                 self.l298nAct.drive_forward(spd)
 
             scan = self.utSensor.get_scan() 
