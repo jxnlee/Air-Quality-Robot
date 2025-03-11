@@ -14,7 +14,7 @@ import l298n_act
 import body_threads
 
 DEFAULT_SPD = 255
-spd = 255
+spd = 100
 
 
 
