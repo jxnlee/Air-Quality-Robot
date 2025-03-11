@@ -59,16 +59,16 @@ class L298N:
         self.l298n_lib.drive_backward(ctypes.c_uint8(speed))
     
     # for turning
-    def turn_left(self, speed=255):
+    def turn_left(self, speed=50):
         self.drive_left_forward(speed)
-        self.drive_right_forward(int(speed/4))
+        self.drive_right_backward(speed)
     
-    def turn_right(self, speed=255):
+    def turn_right(self, speed=50):
         self.drive_right_forward(speed)
-        self.drive_left_forward(int(speed/4))
+        self.drive_left_backward(speed)
     
-    def move_forward(self, speed=255):
+    def move_forward(self, speed=80):
         self.drive_forward(speed)
     
-    def move_backward(self, speed=255):
+    def move_backward(self, speed=80):
         self.drive_backward(speed)

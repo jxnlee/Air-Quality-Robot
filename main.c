@@ -16,8 +16,13 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	init_ultrasonic();
-
+	//if (!init_pms()) return 0;
+	//float temperature;
+	//float humidity;
 	long distance;
+	//PM25_Data pms5003_data;
+	//init_l298n();
+	//set_motors_speed(255);
 
 	int running = 1;
 
@@ -35,14 +40,24 @@ int main(int argc, char* argv[])
 		/*
 		if (read_pms(&pms5003_data))
 		{
-			print_pms_readings(&pms5003_data);	
+			print_pms_readings(&pms5003_data);
 		}
 		else
 		{
 			printf("ERROR READING PM2.5!!!\n");
 		}
 		delay(1000);*/
+		
+		//drive_forward(1000);
+		
+//		delay(1000);
+
+//		drive_backward(1000);
+		
+//		delay(1000);
 
 	}
+	close_pms();
+	motors_off();
 	return 0;
 }
