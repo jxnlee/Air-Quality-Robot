@@ -187,6 +187,7 @@ class RobotSLAM:
                 # Store the temperature and humidity in the respective maps
                 self.temp_data[map_x, map_y] = self.dhtSensor.temperature#dht_data["temperature"]
                 self.humidity_data[map_x, map_y] = self.dhtSensor.humidity#dht_data["humidity"]
+                self.pms_data[map_x, map_y] = self.pmsSensor.particle
                 print("temp", self.dhtSensor.temperature)
                 # || or greater than other values...
                 if self.dhtSensor.temperature > self.tempThreshold or self.dhtSensor.humidity > self.humThreshold or self.pmsSensor.particle > self.parThreshold:
