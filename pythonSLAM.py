@@ -251,10 +251,36 @@ class RobotSLAM:
         # Save and show the figure
         plt.savefig('temperature_heatmap.png', dpi=300)
         plt.show()
-    def visualizeHumidity():
-        pass
-    def visualizeParticles():
-        pass
+    def visualizeHumidity(self):
+        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
+        temp_mask = self.humidity_data > 0
+        masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        plt.figure(10,10)
+        humMap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        cbar = plt.colorbar(humMap)
+        cbar.set_label('Humidity')
+        plt.title('Humidity Map')
+        plt.xlabel('X (pixels)')
+        plt.ylabel('Y (pixels)')
+        
+        # Save and show the figure
+        plt.savefig('humidity_map.png', dpi=300)
+        plt.show()
+    def visualizeParticles(self):
+        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
+        temp_mask = self.pms_data > 0
+        masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
+        plt.figure(10,10)
+        partmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        cbar = plt.colorbar(partmap)
+        cbar.set_label('particles')
+        plt.title('Particle Map')
+        plt.xlabel('X (pixels)')
+        plt.ylabel('Y (pixels)')
+        
+        # Save and show the figure
+        plt.savefig('particle_map.png', dpi=300)
+        plt.show()
 
     def cleanUp(self):
         # might want to start from last index tho.
