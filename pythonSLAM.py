@@ -262,7 +262,9 @@ class RobotSLAM:
                 break
             # read ultrasonic, if something is in front, turn right twice, then move forward for half a second, until
             distance = self.utSensor.read_ultrasonic()
-            if distance < 10:
+            if distance == -1:
+                continue
+            if distance < 200:
                 self.l298nAct.drive_left_backward(spd)
                 # time.sleep(0.2)
                 # self.l298nAct.stop()
@@ -293,7 +295,9 @@ class RobotSLAM:
             if startTime - currTime > 12:
                 break
             distance = self.utSensor.read_ultrasonic()
-            if distance < 10:
+            if distance == -1:
+                continue
+            if distance < 200:
                 self.l298nAct.drive_left_backward(spd)
                 time.sleep(0.2)
                 # self.l298nAct.stop()
