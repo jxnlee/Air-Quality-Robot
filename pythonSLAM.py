@@ -246,10 +246,13 @@ class RobotSLAM:
     
     def visualizeTemp(self):
         # this hides the areas not explored, could also just directly pass in tempdata into heatmap
-        temp_mask = self.temp_data > 0
-        masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        # temp_mask = self.temp_data > 0
+        # masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        # plt.figure(figsize=(10,10))
+        # heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
         plt.figure(figsize=(10,10))
-        heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        heatmap = plt.imshow(self.temp_data, cmap='hot', origin='lower')
+
         cbar = plt.colorbar(heatmap)
         cbar.set_label('Temperature (°C)')
         plt.title('Temperature Heatmap')
