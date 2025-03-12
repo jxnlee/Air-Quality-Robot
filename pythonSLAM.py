@@ -187,7 +187,8 @@ class RobotSLAM:
                     self.dhtSensor.read_dht()
                     time.sleep(1)
                 
-                while self.pmsSensor.read_pms() == -1:
+                while self.pmsSensor.particle == -1:
+                    self.pmsSensor.read_pms()
                     time.sleep(0.5)
                 
 
