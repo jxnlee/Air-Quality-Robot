@@ -6,8 +6,8 @@ pms_lib = ctypes.CDLL("./pms.so")
 pms_lib.read_pms.argtypes = [ctypes.POINTER(ctypes.c_uint16)]
 pms_lib.read_pms.restype = ctypes.c_int
 
-pms_lib.read_pms.argtypes = []
-pms_lib.read_pms.restype = None
+pms_lib.print_pms_readings.argtypes = []
+pms_lib.print_pms_readings.restype = None
 
 class PMSSensor:
     def __init__(self):
