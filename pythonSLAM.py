@@ -370,7 +370,7 @@ def main():
         # Stop mapping loop
         slam.is_running = False
         if hasattr(slam, 'mapping_thread'):
-            slam.mapping_thread.join(timeout=1.0)
+            slam.mapping_thread.join(timeout=5.0)
         
         # Visualize the map
         slam.visualize_map()
