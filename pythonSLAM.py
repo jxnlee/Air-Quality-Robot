@@ -287,6 +287,7 @@ class RobotSLAM:
             # Update current position
             map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
+            time.sleep(0.1)
         
         startTime  = time.time()
         # Then handle y-coordinate navigation
@@ -320,7 +321,8 @@ class RobotSLAM:
             # Update current position
             map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-        
+            time.sleep(0.1)
+
         print(f"Reached destination ({target_x}, {target_y})")
 
 
