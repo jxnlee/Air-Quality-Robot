@@ -16,11 +16,19 @@ import pms_sensor
 import nion_gen_act
 import ctypes
 
-body_lib = ctypes.CDLL("./body.so")
+body_lib = ctypes.CDLL("./drivers/body.so")
 
-DEFAULT_SPD = 255
-spd = 75
+STRAIGHT_SPD = 75
+TURNING_SPD = 150
+MM_PER_SEC = 30
 
+DIST_THRESHOLD = 250
+DIST_BOUND = 15
+
+TURN_DEG = 30
+TURN_TIME = 0.5
+
+ADJUST_TIME = 0.2
 
 
 class RobotSLAM:
@@ -87,12 +95,12 @@ class RobotSLAM:
         """
         # Use velocity instead of acceleration
         # came to 350 after testing and measuring on a carpet
-        velocity_x = 350  # mm/s - forward velocity
+        velocity_x = 300  # mm/s - forward velocity
         velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
         if self.turning:
             velocity_x = 0
         # Update the pose angle based on the direction counter
-        self.pose[2] = self.direction * 90 
+        self.pose[2] = self.direction * TURN_DEG
         
         # Get current orientation
         theta_rad = math.radians(self.pose[2])
@@ -114,19 +122,48 @@ class RobotSLAM:
         map_y = self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
         self.trajectory.append([map_x, map_y])
     
-    #90 degree turn
+    # Turn set number of degrees for a set amount of time
     def turn(self):
         self.turning = True
-        self.direction = (self.direction + 1) % 4
+        self.direction = (self.direction + 1) % (360 / TURN_DEG)
         # turn faster than straight line
-        self.l298nAct.turn_right(2*spd)
-        print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 22.5}°)")
-        time.sleep(0.5)  # Simulate turn time
+        self.l298nAct.turn_right(TURNING_SPD)
+        print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * TURN_DEG}°)")
+        time.sleep(TURN_TIME)  # Simulate turn time
         self.turning = False
+
+    def left_adjust(self):
+        self.l298nAct.drive_right_backward(STRAIGHT_SPD)
+        self.l298nAct.drive_left_forward(0)
+        time.sleep(ADJUST_TIME)
+    
+    def pause(self):
+        self.l298nAct.stop()
+        time.sleep(0.5)
+
+    def read_sensors(self, map_x, map_y):
+        self.l298nAct.stop()
+        while self.dhtSensor.temperature < 0:
+            self.dhtSensor.read_dht()
+            time.sleep(1)
+        while self.pmsSensor.particle < 0:
+            self.pmsSensor.read_pms()
+            time.sleep(1)
+        
+        self.temp_data[map_x, map_y] = self.dhtSensor.temperature
+        self.humidity_data[map_x, map_y] = self.dhtSensor.humidity
+        self.pms_data[map_x, map_y] = self.pmsSensor.particle
+
+        if (self.dhtSensor.temperature > self.tempThreshold or
+                self.dhtSensor.humidity > self.humThreshold or
+                self.pmsSensor.particle > self.parThreshold):
+            self.reVisit.append([map_x, map_y])
+        #self.l298nAct.drive_forward(self.STRAIGHT_SPD)
 
     def mapping_loop(self):
         last_time = time.time()
         counter=0
+
         while self.is_running:
             current_time = time.time()
             dt = current_time - last_time
@@ -135,16 +172,16 @@ class RobotSLAM:
             distance = self.utSensor.read_ultrasonic()
             print("distance", distance)
 
-            if distance == -1:
+            if distance < 0:
+                self.pause()
                 continue
             counter+=1
             # too close to an obstacle
-            if distance <= 200:
+            if distance < DIST_THRESHOLD:
                 # move away then turn
-                self.l298nAct.drive_left_backward(spd)
-                time.sleep(0.1)
+                self.left_adjust()
                 self.turn()
-                turnInc = 10
+                #turnInc = 10
            ## elif distance <= turnInc:
                 # turn...
                 # increase inc value.
@@ -154,10 +191,10 @@ class RobotSLAM:
             else:
                 # add some randomness and a timeout by using counter.
                 if counter >= 50:
-                    self.l298nAct.drive_right_backward(spd)
-                    time.sleep(0.5)
+                    self.l298nAct.drive_right_backward(STRAIGHT_SPD)
+                    time.sleep(TURN_TIME)
                     counter = 0
-                self.l298nAct.drive_forward(spd)
+                self.l298nAct.drive_forward(STRAIGHT_SPD)
 
             scan = self.utSensor.get_scan() 
 
@@ -178,29 +215,8 @@ class RobotSLAM:
             map_y = max(0, min(map_y, self.map_size_pixels - 1))
             print(f"mapx: {map_x} mapy: {map_y}")
             if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
-            # Read DHT sensor data
-                #dht_data = self.dhtSensor.read_dht()
-                print("REACHED TEMPERATURE READING")
-                self.l298nAct.stop()
-               # self.dhtSensor.read_dht()...might need to always reset to -1 if it is the case that it was moving too fast.
-                while self.dhtSensor.temperature == -1:
-                    self.dhtSensor.read_dht()
-                    time.sleep(1)
-                
-                while self.pmsSensor.particle == -1:
-                    self.pmsSensor.read_pms()
-                    time.sleep(0.5)
-                
-
-                # Store the temperature and humidity in the respective maps
-                self.temp_data[map_x, map_y] = self.dhtSensor.temperature#dht_data["temperature"]
-                self.humidity_data[map_x, map_y] = self.dhtSensor.humidity#dht_data["humidity"]
-                self.pms_data[map_x, map_y] = self.pmsSensor.particle
-                print("temp", self.dhtSensor.temperature)
-                # || or greater than other values...
-                if self.dhtSensor.temperature > self.tempThreshold or self.dhtSensor.humidity > self.humThreshold or self.pmsSensor.particle > self.parThreshold:
-                    self.reVisit.append([map_x, map_y])
-                self.l298nAct.drive_forward(spd)
+                self.read_sensors(map_x, map_y)
+                self.l298nAct.drive_forward(STRAIGHT_SPD)
             # Get the map
             self.slam.getmap(self.mapbytes)
             
@@ -251,7 +267,7 @@ class RobotSLAM:
         # plt.figure(figsize=(10,10))
         # heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
         plt.figure(figsize=(10,10))
-        heatmap = plt.imshow(self.temp_data, cmap='hot', origin='lower')
+        heatmap = plt.imshow(self.temp_data, cmap='hot', origin='lower', interpolation='nearest')
 
         cbar = plt.colorbar(heatmap)
         cbar.set_label('Temperature (°C)')
@@ -268,7 +284,7 @@ class RobotSLAM:
         temp_mask = self.humidity_data > 0
         masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
         plt.figure(figsize=(10,10))
-        humMap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        humMap = plt.imshow(masked_temp, cmap='hot', origin='lower', interpolation='nearest')
         cbar = plt.colorbar(humMap)
         cbar.set_label('Humidity')
         plt.title('Humidity Map')
@@ -283,7 +299,7 @@ class RobotSLAM:
         temp_mask = self.pms_data > 0
         masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
         plt.figure(figsize=(10,10))
-        partmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        partmap = plt.imshow(masked_temp, cmap='hot', origin='lower', interpolation='nearest')
         cbar = plt.colorbar(partmap)
         cbar.set_label('particles')
         plt.title('Particle Map')
@@ -299,10 +315,8 @@ class RobotSLAM:
         i = 0
         print("REVIST:")
         print(self.reVisit)
-        while i < len(self.reVisit):
+        for x1, y1 in self.reVisit:
             # just traversing it like this should be close to optimal most of the time, since we're appending to the array, so each location is next to one another.
-            x1 = self.reVisit[i][0] 
-            y1 = self.reVisit[i][1] 
             self.navigateTo(x1, y1)
             # actuate the fan.
             
@@ -313,7 +327,6 @@ class RobotSLAM:
             time.sleep(5)
             self.nionGen.stop_nion_gen()
             self.fanSensor.stop_fan()
-            i+=1
 
     def navigateTo(self, target_x, target_y):
         # Get current position in map coordinates
@@ -339,9 +352,9 @@ class RobotSLAM:
             scan = self.utSensor.get_scan()
             distance = self.utSensor.read_ultrasonic()
             
-            if distance == -1:
+            if distance < 0:
                 print("Ultrasonic reading failed, retrying...")
-                time.sleep(0.5)
+                self.pause()
                 continue
                 
             # Update odometry
@@ -361,23 +374,22 @@ class RobotSLAM:
             self.trajectory.append([map_x, map_y])
             
             # Handle navigation logic
-            if distance < 200:
-                self.l298nAct.drive_left_backward(spd)
-                time.sleep(0.2)
+            if distance <= DIST_THRESHOLD:
+                self.left_adjust()
             else:
                 if map_x < target_x:
                     # Need to move right
                     target_direction = 0
                 else:
                     # Need to move left
-                    target_direction = 2 
+                    target_direction = int(180 / TURN_DEG) 
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
                     self.turn()
                     
                 # Drive forward
-                self.l298nAct.drive_forward(spd)
+                self.l298nAct.drive_forward(STRAIGHT_SPD)
                 
             time.sleep(0.1)
         
@@ -393,8 +405,9 @@ class RobotSLAM:
             scan = self.utSensor.get_scan()
             distance = self.utSensor.read_ultrasonic()
             
-            if distance == -1:
+            if distance < 0:
                 print("Ultrasonic reading failed, retrying...")
+                self.l298nAct.stop()
                 time.sleep(0.5)
                 continue
                 
@@ -415,28 +428,32 @@ class RobotSLAM:
             self.trajectory.append([map_x, map_y])
             
             # Handle navigation logic
-            if distance < 200:
-                self.l298nAct.drive_left_backward(spd)
-                time.sleep(0.2)
+            if distance < DIST_THRESHOLD:
+                self.left_adjust()
             else:
                 if map_y < target_y:
                     # move right
-                    target_direction = 1 
+                    target_direction = int (90 / TURN_DEG)
                 else:
                     # move left
-                    target_direction = 3 
+                    target_direction = int (270 / TURN_DEG)
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
                     self.turn()
                     
                 # Drive forward
-                self.l298nAct.drive_forward(spd)
+                self.l298nAct.drive_forward(STRAIGHT_SPD)
                 
             time.sleep(0.1)
 
         
         print(f"Reached destination ({target_x}, {target_y})")
+    
+    #def navigate_axis(self, current, target, positive_dir, negative_dir):
+
+    
+    
 
 
     # def navigateTo(self, target_x, target_y):  # Added self parameter and renamed to avoid confusion
@@ -568,13 +585,13 @@ def main():
         if slam.mapping_thread.is_alive():
             print("Warning: Mapping thread did not terminate properly")
         # Visualize the map
+        slam.l298nAct.stop()
+        slam.stop()
         time.sleep(1)
         slam.visualize_map()
         slam.visualizeTemp()
         slam.visualizeHumidity()
         slam.visualizeParticles()
-        slam.stop()
-        
         # Start just position tracking (not full mapping)
         # TODO: uncomment
         # slam.is_running = True
@@ -583,7 +600,6 @@ def main():
         # slam.position_thread.start()
 
         # # SHORT FIX
-        slam.l298nAct.stop()
         time.sleep(4)
         # if len(slam.reVisit) > 0:
         #     slam.fanSensor.start_fan()
@@ -606,7 +622,6 @@ def main():
         #     time.sleep(1)
         #     print(f"Cleaning: {i+1}/40 seconds")
         # Stop position tracking
-        slam.is_running = False
         # slam.position_thread.join(timeout=1.0)
         
     except KeyboardInterrupt:

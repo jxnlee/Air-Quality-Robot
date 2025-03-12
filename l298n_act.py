@@ -1,7 +1,7 @@
 import ctypes
 import time
 
-l298n_lib = ctypes.CDLL("./l298n.so")
+l298n_lib = ctypes.CDLL("./drivers/l298n.so")
 
 # Define argument types and return types for the C functions
 l298n_lib.set_motors_speed.argtypes = [ctypes.c_uint8]
@@ -59,18 +59,18 @@ class L298N:
         self.l298n_lib.drive_backward(ctypes.c_uint8(speed))
     
     # for turning
-    def turn_left(self, speed=50):
+    def turn_left(self, speed=150):
         self.drive_left_forward(speed)
-        self.drive_right_backward(int(0.5*speed))
+        self.drive_right_backward(speed)
         #self.drive_right_backward(0)
     
-    def turn_right(self, speed=50):
+    def turn_right(self, speed=150):
         self.drive_right_forward(speed)
-        self.drive_left_backward(int(0.5* speed))
+        self.drive_left_backward(speed)
         #self.drive_left_backward(0)
     
-    def move_forward(self, speed=60):
+    def move_forward(self, speed=75):
         self.drive_forward(speed)
     
-    def move_backward(self, speed=60):
+    def move_backward(self, speed=75):
         self.drive_backward(speed)

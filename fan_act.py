@@ -1,6 +1,6 @@
 import ctypes
 
-fan_lib = ctypes.CDLL("./fan.so")
+fan_lib = ctypes.CDLL("./drivers/fan.so")
 
 fan_lib.start_fan.argtypes = []
 fan_lib.start_fan.restype = None
