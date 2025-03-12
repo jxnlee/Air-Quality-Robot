@@ -248,7 +248,7 @@ class RobotSLAM:
         # this hides the areas not explored, could also just directly pass in tempdata into heatmap
         temp_mask = self.temp_data > 0
         masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
-        plt.figure(10,10)
+        plt.figure(figsize=(10,10))
         heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
         cbar = plt.colorbar(heatmap)
         cbar.set_label('Temperature (°C)')
@@ -259,11 +259,12 @@ class RobotSLAM:
         # Save and show the figure
         plt.savefig('temperature_heatmap.png', dpi=300)
         plt.show()
+        
     def visualizeHumidity(self):
         # this hides the areas not explored, could also just directly pass in tempdata into heatmap
         temp_mask = self.humidity_data > 0
         masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
-        plt.figure(10,10)
+        plt.figure(figsize=(10,10))
         humMap = plt.imshow(masked_temp, cmap='hot', origin='lower')
         cbar = plt.colorbar(humMap)
         cbar.set_label('Humidity')
@@ -278,7 +279,7 @@ class RobotSLAM:
         # this hides the areas not explored, could also just directly pass in tempdata into heatmap
         temp_mask = self.pms_data > 0
         masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
-        plt.figure(10,10)
+        plt.figure(figsize=(10,10))
         partmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
         cbar = plt.colorbar(partmap)
         cbar.set_label('particles')
