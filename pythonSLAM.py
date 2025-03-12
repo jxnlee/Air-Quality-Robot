@@ -505,6 +505,7 @@ def main():
         # Visualize the map
         time.sleep(1)
         slam.visualize_map()
+        slam.stop()
         
         # Start just position tracking (not full mapping)
         # TODO: uncomment
@@ -513,12 +514,22 @@ def main():
         # slam.position_thread.daemon = True
         # slam.position_thread.start()
 
-        # SHORT FIX
-        if len(slam.reVisit) > 0:
-            slam.fanSensor.start_fan()
-            time.sleep(5)
-            slam.fanSensor.stop_fan()
-        
+        # # SHORT FIX
+        # slam.l298nAct.stop()
+        # if len(slam.reVisit) > 0:
+        #     slam.fanSensor.start_fan()
+        #     time.sleep(5)
+        #     slam.fanSensor.stop_fan()
+        slam.fanSensor.start_fan()
+        slam.start()
+
+        for i in range(10):
+            time.sleep(1)
+            print(f"Mapping: {i+1}/10 seconds")
+        slam.is_running = False
+
+        slam.fanSensor.stop_fan()
+
         # Now navigate to important points
         print("Navigating to hotspots...")
         # slam.cleanUp()
