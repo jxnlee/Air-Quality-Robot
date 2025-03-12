@@ -250,14 +250,17 @@ class RobotSLAM:
         print(f"Navigating from ({map_x}, {map_y}) to ({target_x}, {target_y})")
         
         # First handle x-coordinate navigation
-        while abs(map_x - target_x) > 5:  # Using a threshold of 5 pixels'
-
+        startTime  = time.time()
+        while abs(map_x - target_x) > 100:  # Using a threshold of 5 pixels'
+            currTime = time.time()
+            if startTime - currTime > 40:
+                break
             # read ultrasonic, if something is in front, turn right twice, then move forward for half a second, until
             distance = self.utSensor.read_ultrasonic()
             if distance < 10:
                 self.l298nAct.drive_left_backward(spd)
-                time.sleep(0.2)
-                self.l298nAct.stop()
+                # time.sleep(0.2)
+                # self.l298nAct.stop()
             if map_x < target_x:
                 # Need to move right (east)
                 target_direction = 0  # East
@@ -271,20 +274,24 @@ class RobotSLAM:
                 
             # Drive forward
             self.l298nAct.drive_forward(spd)
-            time.sleep(0.5)  # Drive for a short time
-            self.l298nAct.stop()
+            # time.sleep(0.5)  # Drive for a short time
+            # self.l298nAct.stop()
             
             # Update current position
             map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
         
+        startTime  = time.time()
         # Then handle y-coordinate navigation
-        while abs(map_y - target_y) > 5:  # Using a threshold of 5 pixels
+        while abs(map_y - target_y) > 100:  
+            currTime = time.time()
+            if startTime - currTime > 40:
+                break
             distance = self.utSensor.read_ultrasonic()
             if distance < 10:
                 self.l298nAct.drive_left_backward(spd)
                 time.sleep(0.2)
-                self.l298nAct.stop()
+                # self.l298nAct.stop()
             if map_y < target_y:
                 # Need to move up (north)
                 target_direction = 1  # North
@@ -299,7 +306,7 @@ class RobotSLAM:
             # Drive forward
             self.l298nAct.drive_forward(spd)
             time.sleep(0.5)  # Drive for a short time
-            self.l298nAct.stop()
+            # self.l298nAct.stop()
             
             # Update current position
             map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
