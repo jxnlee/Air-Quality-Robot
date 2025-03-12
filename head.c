@@ -4,6 +4,7 @@
 long long pulseIn(int pin, int level)
 {
 	long long start_time = micros();
+	printf("PULSE START TIME: %lld\n", start_time);
 
 	// wait for for pulse to start
 	while (read(pin) != level)
@@ -11,7 +12,7 @@ long long pulseIn(int pin, int level)
 		if (micros() - start_time > PULSE_TIMEOUT) 
 		{
 			//printf("Current: %lu, Start: %lu\n");
-			printf("FAILED PULSE IN!!!\n");
+			printf("FAILED TO START PULSE!!!\n");
 			return -1;
 		}
 	}
@@ -22,7 +23,7 @@ long long pulseIn(int pin, int level)
 	while (read(pin) == level)
 	{
 		if (micros() - start_time > PULSE_TIMEOUT) {
-			printf("FAILED PULSE IN!!!\n");
+			printf("FIALED TO END PULSE!!!\n");
 			return 0;
 		}
 	}
