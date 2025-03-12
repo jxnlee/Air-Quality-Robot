@@ -236,11 +236,9 @@ class RobotSLAM:
          plt.savefig('breezyslam_map.png')
          plt.show()
     
-    def visualizeTemp():
-        # Create a mask for areas with valid temperature readings (non-zero)
+    def visualizeTemp(self):
+        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
         temp_mask = self.temp_data > 0
-        
-        # Create a masked array to only show areas with readings
         masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
         plt.figure(10,10)
         heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
