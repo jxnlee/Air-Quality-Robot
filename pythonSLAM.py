@@ -32,6 +32,7 @@ TURN_TIME = 0.5
 ADJUST_TIME = 0.2
 
 
+
 class RobotSLAM:
     """
     Class for managing SLAM with a robot equipped with ultrasonic sensor
@@ -167,7 +168,7 @@ class RobotSLAM:
 
         while self.is_running:
             current_time = time.time()
-            dt = current_time - last_time
+            dt = max(0, current_time - last_time)
             last_time = current_time
             # Get scan from the ultrasonic sensor to mimic a lidar sensor
             distance = self.utSensor.read_ultrasonic()
@@ -175,7 +176,6 @@ class RobotSLAM:
 
             if distance < 0:
                 self.pause()
-                dt = dt - 0.5
                 continue
             counter+=1
             # too close to an obstacle
@@ -183,7 +183,6 @@ class RobotSLAM:
                 # move away then turn
                 self.left_adjust()
                 self.turn()
-                dt = dt - TURN_TIME - ADJUST_TIME
                 #turnInc = 10
            ## elif distance <= turnInc:
                 # turn...
@@ -197,7 +196,6 @@ class RobotSLAM:
                     self.l298nAct.drive_right_backward(STRAIGHT_SPD)
                     time.sleep(TURN_TIME)
                     counter = 0
-                    dt = dt - TURN_TIME
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
 
             scan = self.utSensor.get_scan() 
@@ -614,13 +612,14 @@ def main():
         #     time.sleep(5)
         #     slam.fanSensor.stop_fan()
         slam.fanSensor.start_fan()
+        #slam.nionGen.start_nion_gen()
         slam.start()
 
         for i in range(10):
             time.sleep(1)
             print(f"Mapping: {i+1}/10 seconds")
         slam.is_running = False
-
+        #slam.nionGen.stop_nion_gen()
         slam.fanSensor.stop_fan()
 
         # Now navigate to important points
