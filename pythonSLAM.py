@@ -235,6 +235,28 @@ class RobotSLAM:
          plt.title('BreezySLAM Map and Robot Trajectory')
          plt.savefig('breezyslam_map.png')
          plt.show()
+    
+    def visualizeTemp():
+        # Create a mask for areas with valid temperature readings (non-zero)
+        temp_mask = self.temp_data > 0
+        
+        # Create a masked array to only show areas with readings
+        masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        plt.figure(10,10)
+        heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        cbar = plt.colorbar(heatmap)
+        cbar.set_label('Temperature (°C)')
+        plt.title('Temperature Heatmap')
+        plt.xlabel('X (pixels)')
+        plt.ylabel('Y (pixels)')
+        
+        # Save and show the figure
+        plt.savefig('temperature_heatmap.png', dpi=300)
+        plt.show()
+    def visualizeHumidity():
+        pass
+    def visualizeParticles():
+        pass
 
     def cleanUp(self):
         # might want to start from last index tho.
