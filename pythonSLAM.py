@@ -42,7 +42,7 @@ class RobotSLAM:
 
         # helps us with orientation
         self.direction = 0
-        
+        self.turning = False
         # Initialize map
         self.mapbytes = bytearray(map_size_pixels * map_size_pixels)
         
@@ -80,7 +80,8 @@ class RobotSLAM:
         # came to 350 after testing and measuring on a carpet
         velocity_x = 350  # mm/s - forward velocity
         velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
-        
+        if self.turning:
+            velocity_x = 0
         # Update the pose angle based on the direction counter
         self.pose[2] = self.direction * 90 
         
@@ -106,11 +107,13 @@ class RobotSLAM:
     
     #90 degree turn
     def turn(self):
+        self.turning = True
         self.direction = (self.direction + 1) % 4
         # turn faster than straight line
         self.l298nAct.turn_right(2*spd)
         print(f"Turning right. New direction: {self.direction} (degrees: {self.direction * 22.5}°)")
         time.sleep(0.5)  # Simulate turn time
+        self.turning = False
 
     def mapping_loop(self):
         last_time = time.time()
@@ -162,8 +165,8 @@ class RobotSLAM:
             
             index = map_y * self.map_size_pixels + map_x
             # another potential fix, if it just never reads.
-            # map_x = max(0, min(map_x, self.map_size_pixels - 1))
-            # map_y = max(0, min(map_y, self.map_size_pixels - 1))
+            map_x = max(0, min(map_x, self.map_size_pixels - 1))
+            map_y = max(0, min(map_y, self.map_size_pixels - 1))
             print(f"mapx: {map_x} mapy: {map_y}")
             if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
             # Read DHT sensor data
