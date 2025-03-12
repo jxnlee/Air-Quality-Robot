@@ -522,12 +522,12 @@ def main():
         # Now navigate to important points
         print("Navigating to hotspots...")
         # slam.cleanUp()
-        for i in range(40):
-            time.sleep(1)
-            print(f"Cleaning: {i+1}/40 seconds")
+        # for i in range(40):
+        #     time.sleep(1)
+        #     print(f"Cleaning: {i+1}/40 seconds")
         # Stop position tracking
         slam.is_running = False
-        slam.position_thread.join(timeout=1.0)
+        # slam.position_thread.join(timeout=1.0)
         
     except KeyboardInterrupt:
         print("Process interrupted by user")
