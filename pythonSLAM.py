@@ -515,7 +515,8 @@ def main():
         # slam.position_thread.start()
 
         # # SHORT FIX
-        # slam.l298nAct.stop()
+        slam.l298nAct.stop()
+        time.sleep(4)
         # if len(slam.reVisit) > 0:
         #     slam.fanSensor.start_fan()
         #     time.sleep(5)
