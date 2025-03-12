@@ -164,14 +164,16 @@ class RobotSLAM:
             # another potential fix, if it just never reads.
             # map_x = max(0, min(map_x, self.map_size_pixels - 1))
             # map_y = max(0, min(map_y, self.map_size_pixels - 1))
-
+            print(f"mapx: {map_x} mapy: {map_y}")
             if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
             # Read DHT sensor data
                 #dht_data = self.dhtSensor.read_dht()
+                print("REACHED TEMPERATURE READING")
                 self.l298nAct.stop()
                # self.dhtSensor.read_dht()...might need to always reset to -1 if it is the case that it was moving too fast.
                 while self.dhtSensor.temperature == -1:
                     self.dhtSensor.read_dht()
+                    time.sleep(1)
                 
                 # Store the temperature and humidity in the respective maps
                 self.temp_data[map_x, map_y] = self.dhtSensor.temperature#dht_data["temperature"]

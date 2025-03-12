@@ -23,5 +23,5 @@ class DHTSensor:
             self.temperature = temp.value
             self.humidity = hum.value
             return {"temperature": self.temperature, "humidity": self.humidity}
-        else:
-            raise Exception("Failed to read DHT sensor data")
+        #else:
+        #    raise Exception("Failed to read DHT sensor data")
