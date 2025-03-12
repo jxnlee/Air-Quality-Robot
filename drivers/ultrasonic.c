@@ -18,7 +18,7 @@ void read_ultrasonic(long* distance)
 	turn_off(TRIGGER_PIN);
 	duration = pulseIn(ECHO_PIN, HIGH);
 	if (duration < 0) *distance = -1;
-	*distance = duration / 2 / 7.6;
+	else *distance = duration / 2 / 7.6;
 }
 
 

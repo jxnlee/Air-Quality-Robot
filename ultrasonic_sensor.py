@@ -12,7 +12,7 @@ class UltrasonicSensor(Laser):
         Laser.__init__(self, 360, 10, 30, 5000, 0, 0)
         
         # Load the ultrasonic library
-        self.ultrasonic_lib = ctypes.CDLL("./ultrasonic.so")
+        self.ultrasonic_lib = ctypes.CDLL("./drivers/ultrasonic.so")
         self.ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_long)]
         self.ultrasonic_lib.read_ultrasonic.restype = None
         self.ultrasonic_lib.init_ultrasonic()

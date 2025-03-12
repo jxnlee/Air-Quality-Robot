@@ -1,14 +1,12 @@
 #include <stdio.h>
-#include <pthread.h>
 #include <wiringPi.h>
-#include "head.h"
-#include "dht.h"
-#include "ultrasonic.h"
-#include "pms.h"
-#include "l298n.h"
-#include "fan.h"
-#include "mpu6050.h"
-#include "nion_gen.h"
+#include "drivers/head.h"
+#include "drivers/dht.h"
+#include "drivers/ultrasonic.h"
+#include "drivers/pms.h"
+#include "drivers/l298n.h"
+#include "drivers/fan.h"
+#include "drivers/nion_gen.h"
 
 int main(int argc, char* argv[])
 {

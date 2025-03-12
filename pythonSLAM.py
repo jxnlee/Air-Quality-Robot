@@ -15,6 +15,7 @@ import fan_act
 import pms_sensor
 import nion_gen_act
 import ctypes
+from scipy.ndimage import gaussian_filter
 
 body_lib = ctypes.CDLL("./drivers/body.so")
 
@@ -35,7 +36,7 @@ class RobotSLAM:
     """
     Class for managing SLAM with a robot equipped with ultrasonic sensor
     """
-    def __init__(self, map_size_pixels=800, map_size_meters=20):
+    def __init__(self, map_size_pixels=400, map_size_meters=4):
         
         # Initialize sensors, actuators, and SLAM objects
         self.body_lib = body_lib
@@ -174,6 +175,7 @@ class RobotSLAM:
 
             if distance < 0:
                 self.pause()
+                dt = dt - 0.5
                 continue
             counter+=1
             # too close to an obstacle
@@ -181,6 +183,7 @@ class RobotSLAM:
                 # move away then turn
                 self.left_adjust()
                 self.turn()
+                dt = dt - TURN_TIME - ADJUST_TIME
                 #turnInc = 10
            ## elif distance <= turnInc:
                 # turn...
@@ -194,6 +197,7 @@ class RobotSLAM:
                     self.l298nAct.drive_right_backward(STRAIGHT_SPD)
                     time.sleep(TURN_TIME)
                     counter = 0
+                    dt = dt - TURN_TIME
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
 
             scan = self.utSensor.get_scan() 
@@ -233,6 +237,7 @@ class RobotSLAM:
     def stop(self):
         """Stop the mapping thread"""
         self.is_running = False
+        self.pmsSensor.close()
         if hasattr(self, 'mapping_thread'):
             self.mapping_thread.join(timeout=1.0)
         if hasattr(self, 'position_thread'):
@@ -266,8 +271,9 @@ class RobotSLAM:
         # masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
         # plt.figure(figsize=(10,10))
         # heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        smoothed_temp_data = gaussian_filter(self.temp_data, sigma=5)
         plt.figure(figsize=(10,10))
-        heatmap = plt.imshow(self.temp_data, cmap='hot', origin='lower', interpolation='nearest')
+        heatmap = plt.imshow(smoothed_temp_data, cmap='hot', origin='lower', interpolation='nearest')
 
         cbar = plt.colorbar(heatmap)
         cbar.set_label('Temperature (°C)')
@@ -281,10 +287,11 @@ class RobotSLAM:
         
     def visualizeHumidity(self):
         # this hides the areas not explored, could also just directly pass in tempdata into heatmap
-        temp_mask = self.humidity_data > 0
-        masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        #temp_mask = self.humidity_data > 0
+       # masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        smoothed_humidity_data = gaussian_filter(self.humidity_data, sigma=5)
         plt.figure(figsize=(10,10))
-        humMap = plt.imshow(masked_temp, cmap='hot', origin='lower', interpolation='nearest')
+        humMap = plt.imshow(smoothed_humidity_data, cmap='hot', origin='lower', interpolation='nearest')
         cbar = plt.colorbar(humMap)
         cbar.set_label('Humidity')
         plt.title('Humidity Map')
@@ -296,10 +303,11 @@ class RobotSLAM:
         plt.show()
     def visualizeParticles(self):
         # this hides the areas not explored, could also just directly pass in tempdata into heatmap
-        temp_mask = self.pms_data > 0
-        masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
+        #temp_mask = self.pms_data > 0
+        #masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
+        smoothed_pms_data = gaussian_filter(self.pms_data, sigma=5)
         plt.figure(figsize=(10,10))
-        partmap = plt.imshow(masked_temp, cmap='hot', origin='lower', interpolation='nearest')
+        partmap = plt.imshow(smoothed_pms_data, cmap='hot', origin='lower', interpolation='nearest')
         cbar = plt.colorbar(partmap)
         cbar.set_label('particles')
         plt.title('Particle Map')
@@ -566,7 +574,7 @@ class RobotSLAM:
 # Main function
 def main():
     # Create the SLAM system
-    slam = RobotSLAM(map_size_pixels=800, map_size_meters=20)
+    slam = RobotSLAM(map_size_pixels=400, map_size_meters=4)
     
     try:
         # Start SLAM with full mapping

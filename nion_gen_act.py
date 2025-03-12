@@ -1,6 +1,6 @@
 import ctypes
 
-nion_gen_lib = ctypes.CDLL("./nion_gen.so")
+nion_gen_lib = ctypes.CDLL("./drivers/nion_gen.so")
 
 nion_gen_lib.start_nion_gen.argtypes = []
 nion_gen_lib.start_nion_gen.restype = None

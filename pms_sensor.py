@@ -1,6 +1,6 @@
 import ctypes
 
-pms_lib = ctypes.CDLL("./pms.so")
+pms_lib = ctypes.CDLL("./drivers/pms.so")
 
 # Define the PM25_Data structure to match the C structure
 class PM25_Data(ctypes.Structure):

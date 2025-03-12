@@ -4,7 +4,7 @@
 long long pulseIn(int pin, int level)
 {
 	long long start_time = micros();
-	printf("PULSE START TIME: %lld\n", start_time);
+	//printf("PULSE START TIME: %lld\n", start_time);
 
 	// wait for for pulse to start
 	while (read(pin) != level)
