@@ -8,6 +8,7 @@
 #include "l298n.h"
 #include "fan.h"
 #include "mpu6050.h"
+#include "nion_gen.h"
 
 int main(int argc, char* argv[])
 {
@@ -25,11 +26,12 @@ int main(int argc, char* argv[])
 	//PM25_Data pms5003_data;
 	init_l298n();
 	init_fan();
+	init_nion_gen();
 	//set_motors_speed(255);
 
 	int running = 1;
 
-	float Ax, Ay, Az, Gx, Gy, Gz;
+	//float Ax, Ay, Az, Gx, Gy, Gz;
 
 	// Main program loop
 	int counter = 0;
@@ -43,10 +45,10 @@ int main(int argc, char* argv[])
 		else delay(1000);*/
 		//read_ultrasonic(&distance);
 		//printf("Ultrasonic Distance Measurement: %ldcm\n", distance);
-		read_accelerometer(&Ax, &Ay, &Az);
-		read_gyroscope(&Gx, &Gy, &Gz);
-		printf("\n Gx=%.3f °/s\tGy=%.3f °/s\tGz=%.3f °/s\tAx=%.3f g\tAy=%.3f g\tAz=%.3f g\n",Gx,Gy,Gz,Ax,Ay,Az);
-		delay(500);
+		//read_accelerometer(&Ax, &Ay, &Az);
+		//read_gyroscope(&Gx, &Gy, &Gz);
+		//printf("\n Gx=%.3f °/s\tGy=%.3f °/s\tGz=%.3f °/s\tAx=%.3f g\tAy=%.3f g\tAz=%.3f g\n",Gx,Gy,Gz,Ax,Ay,Az);
+		//delay(500);
 		/*
 		if (read_pms(&pms5003_data))
 		{
@@ -63,10 +65,10 @@ int main(int argc, char* argv[])
 		//delay(500);
 		//motors_off();
 		//delay(5000);
-		//start_fan();
-		//delay(1000);
-		//stop_fan();
-		//delay(5000);
+		start_nion_gen();
+		delay(1000);
+		stop_nion_gen();
+		delay(5000);
 		//counter++;
 	}
 	//close_pms();
