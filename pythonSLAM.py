@@ -63,10 +63,12 @@ class RobotSLAM:
         # Initialize data structures for temperature and humidity
         self.temp_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
         self.humidity_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
-
+        self.pms_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
 
         # TODO: set it to a sensible value, check more than just temperature
         self.tempThreshold = 5#30
+        self.humThreshold = 5
+        self.parThreshold = 5
         self.reVisit = []
     
     def update_odometry(self, dt_seconds):
@@ -166,13 +168,19 @@ class RobotSLAM:
             if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
             # Read DHT sensor data
                 #dht_data = self.dhtSensor.read_dht()
-                self.dhtSensor.read_dht()
+                self.l298nAct.stop()
+               # self.dhtSensor.read_dht()...might need to always reset to -1 if it is the case that it was moving too fast.
+                while self.dhtSensor.temperature == -1:
+                    self.dhtSensor.read_dht()
+                
                 # Store the temperature and humidity in the respective maps
                 self.temp_data[map_x, map_y] = self.dhtSensor.temperature#dht_data["temperature"]
                 self.humidity_data[map_x, map_y] = self.dhtSensor.humidity#dht_data["humidity"]
                 print("temp", self.dhtSensor.temperature)
-                if self.dhtSensor.temperature > self.tempThreshold:
+                # || or greater than other values...
+                if self.dhtSensor.temperature > self.tempThreshold :
                     self.reVisit.append([map_x, map_y])
+                self.l298nAct.drive_forward()
             # Get the map
             self.slam.getmap(self.mapbytes)
             
