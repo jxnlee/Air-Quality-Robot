@@ -15,10 +15,10 @@ class PMSSensor:
         self.particle = -1
 
     def read_pms(self):
-        particle = ctypes.c_uint16()
-        result = self.pms_lib.read_pms(ctypes.byref(particle))
+        part = ctypes.c_uint16()
+        result = self.pms_lib.read_pms(ctypes.byref(part))
         if result == 1:
-            self.particle = particle.value
+            self.particle = part.value
             return 1
         # else:
         #     raise Exception("Failed to read PMS sensor data")
