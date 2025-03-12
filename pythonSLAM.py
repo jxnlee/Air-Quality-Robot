@@ -242,6 +242,52 @@ class RobotSLAM:
          plt.title('BreezySLAM Map and Robot Trajectory')
          plt.savefig('breezyslam_map.png')
          plt.show()
+    
+    def visualizeTemp(self):
+        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
+        temp_mask = self.temp_data > 0
+        masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        plt.figure(10,10)
+        heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        cbar = plt.colorbar(heatmap)
+        cbar.set_label('Temperature (°C)')
+        plt.title('Temperature Heatmap')
+        plt.xlabel('X (pixels)')
+        plt.ylabel('Y (pixels)')
+        
+        # Save and show the figure
+        plt.savefig('temperature_heatmap.png', dpi=300)
+        plt.show()
+    def visualizeHumidity(self):
+        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
+        temp_mask = self.humidity_data > 0
+        masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        plt.figure(10,10)
+        humMap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        cbar = plt.colorbar(humMap)
+        cbar.set_label('Humidity')
+        plt.title('Humidity Map')
+        plt.xlabel('X (pixels)')
+        plt.ylabel('Y (pixels)')
+        
+        # Save and show the figure
+        plt.savefig('humidity_map.png', dpi=300)
+        plt.show()
+    def visualizeParticles(self):
+        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
+        temp_mask = self.pms_data > 0
+        masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
+        plt.figure(10,10)
+        partmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
+        cbar = plt.colorbar(partmap)
+        cbar.set_label('particles')
+        plt.title('Particle Map')
+        plt.xlabel('X (pixels)')
+        plt.ylabel('Y (pixels)')
+        
+        # Save and show the figure
+        plt.savefig('particle_map.png', dpi=300)
+        plt.show()
 
     def cleanUp(self):
         # might want to start from last index tho.
@@ -250,8 +296,8 @@ class RobotSLAM:
         print(self.reVisit)
         while i < len(self.reVisit):
             # just traversing it like this should be close to optimal most of the time, since we're appending to the array, so each location is next to one another.
-            x1 = self.reVisit[i][0]  # Fixed indexing here
-            y1 = self.reVisit[i][1]  # Fixed indexing here
+            x1 = self.reVisit[i][0] 
+            y1 = self.reVisit[i][1] 
             self.navigateTo(x1, y1)
             # actuate the fan.
             
@@ -315,11 +361,11 @@ class RobotSLAM:
                 time.sleep(0.2)
             else:
                 if map_x < target_x:
-                    # Need to move right (east)
-                    target_direction = 0  # East
+                    # Need to move right
+                    target_direction = 0
                 else:
-                    # Need to move left (west)
-                    target_direction = 2  # West
+                    # Need to move left
+                    target_direction = 2 
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
@@ -328,7 +374,6 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(spd)
                 
-            # Short sleep to avoid CPU hogging
             time.sleep(0.1)
         
         while abs(map_y - target_y) > 100:
@@ -336,7 +381,6 @@ class RobotSLAM:
             if current_time - startTime > 12:
                 break
                 
-            # Update odometry and pose similar to position_tracking_loop
             dt = current_time - last_time
             last_time = current_time
             
@@ -371,11 +415,11 @@ class RobotSLAM:
                 time.sleep(0.2)
             else:
                 if map_y < target_y:
-                    # Need to move right (east)
-                    target_direction = 1  # East
+                    # move right
+                    target_direction = 1 
                 else:
-                    # Need to move left (west)
-                    target_direction = 3  # West
+                    # move left
+                    target_direction = 3 
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
@@ -384,7 +428,6 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(spd)
                 
-            # Short sleep to avoid CPU hogging
             time.sleep(0.1)
 
         
@@ -522,6 +565,9 @@ def main():
         # Visualize the map
         time.sleep(1)
         slam.visualize_map()
+        slam.visualizeTemp()
+        slam.visualizeHumidity()
+        slam.visualizeParticles()
         slam.stop()
         
         # Start just position tracking (not full mapping)
