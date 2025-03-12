@@ -10,7 +10,7 @@ const char PMS_SERIAL_PORT[] = "/dev/ttyUSB0";
 
 static int serial_port;
 
-static PM25_Data* data;
+PM25_Data pms5003_data; 
 
 int init_pms()
 {
@@ -28,7 +28,7 @@ int init_pms()
 
 int read_pms(uint16_t* particles)
 {
-	if (!data) return 0;
+	PM25_Data* data = &pms5003_data;
 	uint8_t buffer[32];
 	uint16_t sum = 0;
 
@@ -116,6 +116,7 @@ float linear(uint16_t aqi_high, uint16_t aqi_low, float conc_high, float conc_lo
 
 void print_pms_readings()
 {
+	PM25_Data* data = &pms5003_data;
 	printf("---------------------------------------\n");
   	printf("Concentration Units (standard)\n");
 	printf("PM 1.0: %hu\t\tPM 2.5: %hu\t\tPM 10: %hu\n", data->pm10_standard, data->pm25_standard, data->pm100_standard);

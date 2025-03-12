@@ -12,11 +12,14 @@ import ultrasonic_sensor
 import dht_sensor
 import l298n_act
 import fan_act
-import body_threads
 import pms_sensor
+import nion_gen_act
+import ctypes
+
+body_lib = ctypes.CDLL("./body.so")
 
 DEFAULT_SPD = 255
-spd = 80
+spd = 75
 
 
 
@@ -27,12 +30,16 @@ class RobotSLAM:
     def __init__(self, map_size_pixels=800, map_size_meters=20):
         
         # Initialize sensors, actuators, and SLAM objects
-        self.robot = body_threads.RobotThreads()
+        self.body_lib = body_lib
+        if self.body_lib.setup() == 0:
+            raise Exception("Failed Initialization!!!")
+            
         self.utSensor = ultrasonic_sensor.UltrasonicSensor()
         self.dhtSensor = dht_sensor.DHTSensor()
         self.l298nAct = l298n_act.L298N()
         self.fanSensor = fan_act.Fan()
         self.pmsSensor = pms_sensor.PMSSensor()
+        self.nionGen = nion_gen_act.N_Ion_Gen()
 
         # Create SLAM object
         self.slam = RMHC_SLAM(
@@ -68,9 +75,9 @@ class RobotSLAM:
         self.pms_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
 
         # TODO: set it to a sensible value, check more than just temperature
-        self.tempThreshold = 5#30
-        self.humThreshold = 5
-        self.parThreshold = 5
+        self.tempThreshold = 10#30
+        self.humThreshold = 50
+        self.parThreshold = 300
         self.reVisit = []
     
     def update_odometry(self, dt_seconds):
@@ -249,8 +256,11 @@ class RobotSLAM:
             # actuate the fan.
             
             self.fanSensor.start_fan()
+            if self.pms_data[x1, y1] > self.parThreshold:
+                self.nionGen.start_nion_gen()
             # sleep for a few seconds, can also use while loop to do the thing.
-            time.sleep(2)
+            time.sleep(5)
+            self.nionGen.stop_nion_gen()
             self.fanSensor.stop_fan()
             i+=1
 
