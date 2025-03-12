@@ -371,7 +371,8 @@ def main():
         slam.is_running = False
         if hasattr(slam, 'mapping_thread'):
             slam.mapping_thread.join(timeout=5.0)
-        
+        if slam.mapping_thread.is_alive():
+            print("Warning: Mapping thread did not terminate properly")
         # Visualize the map
         slam.visualize_map()
         
