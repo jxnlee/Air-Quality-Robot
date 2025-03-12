@@ -19,8 +19,10 @@ class PMSSensor:
         result = self.pms_lib.read_pms(ctypes.byref(particle))
         if result == 1:
             self.particle = particle.value
-        else:
-            raise Exception("Failed to read PMS sensor data")
+            return 1
+        # else:
+        #     raise Exception("Failed to read PMS sensor data")
+        return -1
 
     def print_pms_readings(self):
         self.pms_lib.print_pms_readings()

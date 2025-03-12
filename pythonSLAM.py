@@ -13,6 +13,7 @@ import dht_sensor
 import l298n_act
 import fan_act
 import body_threads
+import pms_sensor
 
 DEFAULT_SPD = 255
 spd = 80
@@ -31,6 +32,7 @@ class RobotSLAM:
         self.dhtSensor = dht_sensor.DHTSensor()
         self.l298nAct = l298n_act.L298N()
         self.fanSensor = fan_act.Fan()
+        self.pmsSensor = pms_sensor.PMSSensor()
 
         # Create SLAM object
         self.slam = RMHC_SLAM(
@@ -178,12 +180,16 @@ class RobotSLAM:
                     self.dhtSensor.read_dht()
                     time.sleep(1)
                 
+                while self.pmsSensor.read_pms() == -1:
+                    time.sleep(0.5)
+                
+
                 # Store the temperature and humidity in the respective maps
                 self.temp_data[map_x, map_y] = self.dhtSensor.temperature#dht_data["temperature"]
                 self.humidity_data[map_x, map_y] = self.dhtSensor.humidity#dht_data["humidity"]
                 print("temp", self.dhtSensor.temperature)
                 # || or greater than other values...
-                if self.dhtSensor.temperature > self.tempThreshold :
+                if self.dhtSensor.temperature > self.tempThreshold or self.dhtSensor.humidity > self.humThreshold or self.pmsSensor.particle > self.parThreshold:
                     self.reVisit.append([map_x, map_y])
                 self.l298nAct.drive_forward(spd)
             # Get the map
