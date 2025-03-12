@@ -253,7 +253,7 @@ class RobotSLAM:
         startTime  = time.time()
         while abs(map_x - target_x) > 100:  # Using a threshold of 5 pixels'
             currTime = time.time()
-            if startTime - currTime > 40:
+            if startTime - currTime > 12:
                 break
             # read ultrasonic, if something is in front, turn right twice, then move forward for half a second, until
             distance = self.utSensor.read_ultrasonic()
@@ -285,7 +285,7 @@ class RobotSLAM:
         # Then handle y-coordinate navigation
         while abs(map_y - target_y) > 100:  
             currTime = time.time()
-            if startTime - currTime > 40:
+            if startTime - currTime > 12:
                 break
             distance = self.utSensor.read_ultrasonic()
             if distance < 10:
