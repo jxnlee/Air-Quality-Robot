@@ -289,8 +289,8 @@ class RobotSLAM:
         print(self.reVisit)
         while i < len(self.reVisit):
             # just traversing it like this should be close to optimal most of the time, since we're appending to the array, so each location is next to one another.
-            x1 = self.reVisit[i][0]  # Fixed indexing here
-            y1 = self.reVisit[i][1]  # Fixed indexing here
+            x1 = self.reVisit[i][0] 
+            y1 = self.reVisit[i][1] 
             self.navigateTo(x1, y1)
             # actuate the fan.
             
@@ -351,11 +351,11 @@ class RobotSLAM:
                 time.sleep(0.2)
             else:
                 if map_x < target_x:
-                    # Need to move right (east)
-                    target_direction = 0  # East
+                    # Need to move right
+                    target_direction = 0
                 else:
-                    # Need to move left (west)
-                    target_direction = 2  # West
+                    # Need to move left
+                    target_direction = 2 
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
@@ -364,7 +364,6 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(spd)
                 
-            # Short sleep to avoid CPU hogging
             time.sleep(0.1)
         
         while abs(map_y - target_y) > 100:
@@ -372,7 +371,6 @@ class RobotSLAM:
             if current_time - startTime > 12:
                 break
                 
-            # Update odometry and pose similar to position_tracking_loop
             dt = current_time - last_time
             last_time = current_time
             
@@ -407,11 +405,11 @@ class RobotSLAM:
                 time.sleep(0.2)
             else:
                 if map_y < target_y:
-                    # Need to move right (east)
-                    target_direction = 1  # East
+                    # move right
+                    target_direction = 1 
                 else:
-                    # Need to move left (west)
-                    target_direction = 3  # West
+                    # move left
+                    target_direction = 3 
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
@@ -420,7 +418,6 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(spd)
                 
-            # Short sleep to avoid CPU hogging
             time.sleep(0.1)
 
         
@@ -558,6 +555,9 @@ def main():
         # Visualize the map
         time.sleep(1)
         slam.visualize_map()
+        slam.visualizeTemp()
+        slam.visualizeHumidity()
+        slam.visualizeParticles()
         slam.stop()
         
         # Start just position tracking (not full mapping)
