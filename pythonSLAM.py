@@ -185,7 +185,7 @@ class RobotSLAM:
                 # || or greater than other values...
                 if self.dhtSensor.temperature > self.tempThreshold :
                     self.reVisit.append([map_x, map_y])
-                self.l298nAct.drive_forward()
+                self.l298nAct.drive_forward(spd)
             # Get the map
             self.slam.getmap(self.mapbytes)
             
