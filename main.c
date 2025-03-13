@@ -17,15 +17,14 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 	//init_ultrasonic();
-	if (!init_pms()) return 0;
-	//float temperature;
-	//float humidity;
+	//if (!init_pms()) return 0;
+	float temperature;
+	float humidity;
 	//long distance;
 	//PM25_Data pms5003_data;
 	//init_l298n();
 	//init_fan();
 	//init_nion_gen();
-	//set_motors_speed(255);
 	uint16_t particles;
 	int running = 1;
 
@@ -35,12 +34,11 @@ int main(int argc, char* argv[])
 	int counter = 0;
 	while (running)
 	{
-		/*if (read_dht(&temperature, &humidity))
+		if (read_dht(&temperature, &humidity))
 		{
 			printf("temperature: %.1f deg C, humidity: %.1f\%\n", temperature, humidity);	
-			delay(1000);
 		}
-		else delay(1000);*/
+		delay(5000);
 		//read_ultrasonic(&distance);
 		//printf("Ultrasonic Distance Measurement: %ldcm\n", distance);
 		//read_accelerometer(&Ax, &Ay, &Az);
@@ -48,7 +46,7 @@ int main(int argc, char* argv[])
 		//printf("\n Gx=%.3f °/s\tGy=%.3f °/s\tGz=%.3f °/s\tAx=%.3f g\tAy=%.3f g\tAz=%.3f g\n",Gx,Gy,Gz,Ax,Ay,Az);
 		//delay(500);
 		
-		if (read_pms(&particles))
+		/*if (read_pms(&particles))
 		{
 			print_pms_readings();
 		}
@@ -56,10 +54,17 @@ int main(int argc, char* argv[])
 		{
 			printf("ERROR READING PM2.5!!!\n");
 		}
-		delay(1000);
+		delay(1000);*/
 		
 		//drive_right_forward(160);
 		//drive_left_backward(40);
+		/*drive_forward(50);
+		delay(1000);
+		motors_off();
+		delay(2000);
+		drive_backward(50);
+		delay(1000);
+		motors_off(2000);*/
 		//delay(500);
 		//motors_off();
 		//delay(5000);

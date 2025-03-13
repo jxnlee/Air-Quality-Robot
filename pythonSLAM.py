@@ -85,9 +85,9 @@ class RobotSLAM:
         self.pms_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
 
         # TODO: set it to a sensible value, check more than just temperature
-        self.tempThreshold = 10#30
-        self.humThreshold = 50
-        self.parThreshold = 300
+        self.tempThreshold = 15#30
+        self.humThreshold = 60
+        self.parThreshold = 350
         self.reVisit = []
     
     def update_odometry(self, dt_seconds):
@@ -327,11 +327,11 @@ class RobotSLAM:
             # actuate the fan.
             
             self.fanSensor.start_fan()
-            if self.pms_data[x1, y1] > self.parThreshold:
-                self.nionGen.start_nion_gen()
+            #if self.pms_data[x1, y1] > self.parThreshold:
+                #self.nionGen.start_nion_gen()
             # sleep for a few seconds, can also use while loop to do the thing.
             time.sleep(5)
-            self.nionGen.stop_nion_gen()
+            #self.nionGen.stop_nion_gen()
             self.fanSensor.stop_fan()
 
     def navigateTo(self, target_x, target_y):
@@ -344,6 +344,7 @@ class RobotSLAM:
         # First handle x-coordinate navigation
         startTime = time.time()
         last_time = time.time()
+        last_sensor_read = 0  # Track when we last read the sensor
         
         while abs(map_x - target_x) > 100:
             current_time = time.time()
@@ -354,15 +355,22 @@ class RobotSLAM:
             dt = current_time - last_time
             last_time = current_time
             
-            # Get scan from the ultrasonic sensor
-            scan = self.utSensor.get_scan()
-            distance = self.utSensor.read_ultrasonic()
-            
-            if distance < 0:
-                print("Ultrasonic reading failed, retrying...")
-                self.pause()
-                continue
+            # Only read sensor if enough time has passed (100ms minimum)
+            if current_time - last_sensor_read > 0.1:
+                # Get scan from the ultrasonic sensor
+                scan = self.utSensor.get_scan()
+                last_sensor_read = current_time  # Update last read time
                 
+                # Wait a bit before doing another sensor read
+                time.sleep(0.06)  # Minimum 60ms between readings
+                
+                distance = self.utSensor.read_ultrasonic()
+                
+                if distance == -1:
+                    print("Ultrasonic reading failed, waiting longer...")
+                    time.sleep(1.0)  # Longer recovery time
+                    continue
+            
             # Update odometry
             self.update_odometry(dt)
             
@@ -380,7 +388,7 @@ class RobotSLAM:
             self.trajectory.append([map_x, map_y])
             
             # Handle navigation logic
-            if distance <= DIST_THRESHOLD:
+            if distance < DIST_THRESHOLD:
                 self.left_adjust()
             else:
                 if map_x < target_x:
@@ -388,7 +396,7 @@ class RobotSLAM:
                     target_direction = 0
                 else:
                     # Need to move left
-                    target_direction = int(180 / TURN_DEG) 
+                    target_direction = 180 / TURN_DEG
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
@@ -397,7 +405,10 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
                 
-            time.sleep(0.1)
+            time.sleep(0.2)  # Increased from 0.1 to 0.2 for more stability
+        
+        # Reset for y-coordinate navigation
+        last_sensor_read = 0
         
         while abs(map_y - target_y) > 100:
             current_time = time.time()
@@ -407,16 +418,22 @@ class RobotSLAM:
             dt = current_time - last_time
             last_time = current_time
             
-            # Get scan from the ultrasonic sensor
-            scan = self.utSensor.get_scan()
-            distance = self.utSensor.read_ultrasonic()
-            
-            if distance < 0:
-                print("Ultrasonic reading failed, retrying...")
-                self.l298nAct.stop()
-                time.sleep(0.5)
-                continue
+            # Only read sensor if enough time has passed
+            if current_time - last_sensor_read > 0.1:
+                # Get scan from the ultrasonic sensor
+                scan = self.utSensor.get_scan()
+                last_sensor_read = current_time
                 
+                # Wait a bit before doing another sensor read
+                time.sleep(0.06)  # Minimum 60ms between readings
+                
+                distance = self.utSensor.read_ultrasonic()
+                
+                if distance == -1:
+                    print("Ultrasonic reading failed, waiting longer...")
+                    time.sleep(1.0)  # Longer recovery time
+                    continue
+            
             # Update odometry
             self.update_odometry(dt)
             
@@ -439,10 +456,10 @@ class RobotSLAM:
             else:
                 if map_y < target_y:
                     # move right
-                    target_direction = int (90 / TURN_DEG)
+                    target_direction = 90 / TURN_DEG
                 else:
                     # move left
-                    target_direction = int (270 / TURN_DEG)
+                    target_direction = 270 / TURN_DEG
                     
                 # Turn to the target direction
                 while self.direction != target_direction:
@@ -451,12 +468,9 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
                 
-            time.sleep(0.1)
+            time.sleep(0.2)  # Increased from 0.1 to 0.2 for more stability
 
-        
         print(f"Reached destination ({target_x}, {target_y})")
-    
-    #def navigate_axis(self, current, target, positive_dir, negative_dir):
 
     
     
@@ -600,36 +614,34 @@ def main():
         slam.visualizeParticles()
         # Start just position tracking (not full mapping)
         # TODO: uncomment
-        # slam.is_running = True
-        # slam.position_thread = Thread(target=slam.cleanUp)
-        # slam.position_thread.daemon = True
-        # slam.position_thread.start()
+       #time.sleep(1)
+        #slam.is_running = True
+        #slam.position_thread = Thread(target=slam.cleanUp)
+        #slam.position_thread.daemon = True
+        #slam.position_thread.start()
 
         # # SHORT FIX
-        time.sleep(4)
-        # if len(slam.reVisit) > 0:
-        #     slam.fanSensor.start_fan()
-        #     time.sleep(5)
-        #     slam.fanSensor.stop_fan()
-        slam.fanSensor.start_fan()
-        #slam.nionGen.start_nion_gen()
-        slam.start()
-
-        for i in range(10):
-            time.sleep(1)
-            print(f"Mapping: {i+1}/10 seconds")
-        slam.is_running = False
-        #slam.nionGen.stop_nion_gen()
-        slam.fanSensor.stop_fan()
+        time.sleep(2.5)
+        numReVisit = len(slam.reVisit)
+        if numReVisit > 5:
+            print(f"Revisiting for {int(numReVisit/5)}")
+            slam.fanSensor.start_fan()
+            slam.start()
+            for i in range(int(numReVisit/5)):
+                time.sleep(1)
+                print(f"Cleaning (Mapping): {i+1}/{int(numReVisit/5)} seconds")
+            slam.is_running = False
+            #slam.nionGen.stop_nion_gen()
+            slam.fanSensor.stop_fan()
 
         # Now navigate to important points
-        print("Navigating to hotspots...")
-        # slam.cleanUp()
-        # for i in range(40):
-        #     time.sleep(1)
-        #     print(f"Cleaning: {i+1}/40 seconds")
+        #print("Navigating to hotspots...")
+        #slam.cleanUp()
+        #for i in range(40):
+        #    time.sleep(1)
+        #    print(f"Cleaning: {i+1}/40 seconds")
         # Stop position tracking
-        # slam.position_thread.join(timeout=1.0)
+        #slam.position_thread.join(timeout=1.0)
         
     except KeyboardInterrupt:
         print("Process interrupted by user")
