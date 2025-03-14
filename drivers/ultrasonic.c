@@ -21,7 +21,7 @@ void init_ultrasonic()
 }
 
 /// @brief Reads the distance measured by the ultrasonic sensor.
-/// @param distance Pointer to store the measured distance.
+/// @param distance Pointer to store the measured distance in cm.
 void read_ultrasonic(long* distance)
 {
 	long long duration;
@@ -30,7 +30,7 @@ void read_ultrasonic(long* distance)
 	turn_off(TRIGGER_PIN);
 	duration = pulseIn(ECHO_PIN, HIGH);
 	if (duration < 0) *distance = -1;
-	else *distance = duration / 2 / 7.6; // distance conversion
+	else *distance = duration / 2 / 7.6; // distance conversion to cm
 }
 
 

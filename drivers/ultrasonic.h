@@ -12,7 +12,7 @@
 void init_ultrasonic();
 
 /// @brief Reads the distance measured by the ultrasonic sensor.
-/// @param distance Pointer to store the measured distance.
+/// @param distance Pointer to store the measured distance in cm.
 void read_ultrasonic(long* distance);
 
 #endif

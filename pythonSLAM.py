@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import time
 import math
 from threading import Thread
-import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
 import ultrasonic_sensor
 import dht_sensor
 import l298n_act
@@ -339,7 +338,7 @@ def main():
         time.sleep(2.5)
         # check that theres enough places we want to revisit
         numReVisit = len(slam.reVisit)
-        if numReVisit > 5:
+        if numReVisit > 100:
             print(f"Revisiting for {int(numReVisit/5)}")
             slam.fanSensor.start_fan()
             slam.start()

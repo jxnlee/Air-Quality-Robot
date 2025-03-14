@@ -1,8 +1,9 @@
+# wrapper for C PMS Sensor
 import ctypes
 
 pms_lib = ctypes.CDLL("./drivers/pms.so")
 
-# Define the PM25_Data structure to match the C structure
+# PM25_Data structure
 class PM25_Data(ctypes.Structure):
     _fields_ = [
         ("pm10_standard", ctypes.c_uint16),
@@ -47,7 +48,9 @@ class PMSSensor:
 
     def read_pms(self):
         part = ctypes.c_uint16()
+        # pass in part
         result = self.pms_lib.read_pms(ctypes.byref(part))
+        # Success
         if result == 1:
             self.particle = part.value
             return 1

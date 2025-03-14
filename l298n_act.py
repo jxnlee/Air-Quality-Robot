@@ -1,5 +1,4 @@
 import ctypes
-import time
 
 l298n_lib = ctypes.CDLL("./drivers/l298n.so")
 
