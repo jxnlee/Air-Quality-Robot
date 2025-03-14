@@ -161,6 +161,7 @@ class RobotSLAM:
             self.reVisit.append([map_x, map_y])
         #self.l298nAct.drive_forward(self.STRAIGHT_SPD)
 
+    # mapping the room
     def mapping_loop(self):
         last_time = time.time()
         counter=0
@@ -182,13 +183,7 @@ class RobotSLAM:
                 # move away then turn
                 self.left_adjust()
                 self.turn()
-                #turnInc = 10
-           ## elif distance <= turnInc:
-                # turn...
-                # increase inc value.
-                # try to simulate a spiral
-             #   turnInc+=10
-              #  self.turn()
+
             else:
                 # add some randomness and a timeout by using counter.
                 if counter >= 50:
@@ -211,10 +206,10 @@ class RobotSLAM:
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             
             index = map_y * self.map_size_pixels + map_x
-            # another potential fix, if it just never reads.
+
             map_x = max(0, min(map_x, self.map_size_pixels - 1))
             map_y = max(0, min(map_y, self.map_size_pixels - 1))
-            #print(f"mapx: {map_x} mapy: {map_y}")
+
             if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
                 self.read_sensors(map_x, map_y)
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
@@ -224,16 +219,16 @@ class RobotSLAM:
             
             time.sleep(0.1)
     
+    #start the SLAM
     def start(self):
-        """Start the mapping thread"""
         self.is_running = True
         self.mapping_thread = Thread(target=self.mapping_loop)
         self.mapping_thread.daemon = True
         self.mapping_thread.start()
         print("SLAM system started")
         
+    # stop the SLAM
     def stop(self):
-        """Stop the mapping thread"""
         self.is_running = False
         self.pmsSensor.close()
         if hasattr(self, 'mapping_thread'):
@@ -243,8 +238,8 @@ class RobotSLAM:
         
         print("SLAM system stopped")
     
+    # map of where the robot traveled
     def visualize_map(self):
-         """Visualize the current map and trajectory"""
          # Convert the map to a numpy array
          map_array = np.reshape(np.frombuffer(self.mapbytes, dtype=np.uint8),
                                (self.map_size_pixels, self.map_size_pixels))
@@ -316,9 +311,8 @@ class RobotSLAM:
         plt.savefig('particle_map.png', dpi=300)
         plt.show()
 
+
     def cleanUp(self):
-        # might want to start from last index tho.
-        i = 0
         print("REVIST:")
         print(self.reVisit)
         for x1, y1 in self.reVisit:
@@ -472,116 +466,6 @@ class RobotSLAM:
 
         print(f"Reached destination ({target_x}, {target_y})")
 
-    
-    
-
-
-    # def navigateTo(self, target_x, target_y):  # Added self parameter and renamed to avoid confusion
-    #     # Get current position in map coordinates
-    #     map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-    #     map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-        
-    #     print(f"Navigating from ({map_x}, {map_y}) to ({target_x}, {target_y})")
-        
-    #     # First handle x-coordinate navigation
-    #     startTime  = time.time()
-    #     while abs(map_x - target_x) > 100:  # Using a threshold of 5 pixels'
-    #         currTime = time.time()
-    #         if startTime - currTime > 12:
-    #             break
-    #         # read ultrasonic, if something is in front, turn right twice, then move forward for half a second, until
-    #         distance = self.utSensor.read_ultrasonic()
-    #         if distance == -1:
-    #             continue
-    #         if distance < 200:
-    #             self.l298nAct.drive_left_backward(spd)
-    #             # time.sleep(0.2)
-    #             # self.l298nAct.stop()
-    #         if map_x < target_x:
-    #             # Need to move right (east)
-    #             target_direction = 0  # East
-    #         else:
-    #             # Need to move left (west)
-    #             target_direction = 2  # West
-                
-    #         # Turn to the target direction
-    #         while self.direction != target_direction:
-    #             self.turn()
-                
-    #         # Drive forward
-    #         self.l298nAct.drive_forward(spd)
-    #         # time.sleep(0.5)  # Drive for a short time
-    #         # self.l298nAct.stop()
-            
-    #         # Update current position
-    #         map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-    #         map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-    #         time.sleep(0.1)
-        
-    #     startTime  = time.time()
-    #     # Then handle y-coordinate navigation
-    #     while abs(map_y - target_y) > 100:  
-    #         currTime = time.time()
-    #         if startTime - currTime > 12:
-    #             break
-    #         distance = self.utSensor.read_ultrasonic()
-    #         if distance == -1:
-    #             continue
-    #         if distance < 200:
-    #             self.l298nAct.drive_left_backward(spd)
-    #             time.sleep(0.2)
-    #             # self.l298nAct.stop()
-    #         if map_y < target_y:
-    #             # Need to move up (north)
-    #             target_direction = 1  # North
-    #         else:
-    #             # Need to move down (south)
-    #             target_direction = 3  # South
-                
-    #         # Turn to the target direction
-    #         while self.direction != target_direction:
-    #             self.turn()
-                
-    #         # Drive forward
-    #         self.l298nAct.drive_forward(spd)
-    #         time.sleep(0.5)  # Drive for a short time
-    #         # self.l298nAct.stop()
-            
-    #         # Update current position
-    #         map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-    #         map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
-    #         time.sleep(0.1)
-
-    #     print(f"Reached destination ({target_x}, {target_y})")
-
-
-    # def position_tracking_loop(self):
-    #     """Track position without mapping new areas"""   
-    #     last_time = time.time()
-     
-    #     while self.is_running:
-    #         current_time = time.time()
-    #         dt = current_time - last_time
-    #         last_time = current_time
-    #         # Get scan from the ultrasonic sensor
-    #         scan = self.utSensor.get_scan() 
-    #         # time
-    #         self.update_odometry(dt)
-    #         # Update SLAM with current scan and odometry
-    #         self.slam.update(scan, pose_change=self.pose)
-            
-    #         # Get current pose estimate from SLAM
-    #         self.pose[0], self.pose[1], self.pose[2] = self.slam.getpos()
-            
-    #         # Update trajectory for visualization
-    #         map_x = self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
-    #         map_y = self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2
-    #         self.trajectory.append([map_x, map_y])
-            
-    #         time.sleep(0.1)  # Run at 10Hz
-
-
-
 
 # Main function
 def main():
@@ -612,13 +496,6 @@ def main():
         slam.visualizeTemp()
         slam.visualizeHumidity()
         slam.visualizeParticles()
-        # Start just position tracking (not full mapping)
-        # TODO: uncomment
-       #time.sleep(1)
-        #slam.is_running = True
-        #slam.position_thread = Thread(target=slam.cleanUp)
-        #slam.position_thread.daemon = True
-        #slam.position_thread.start()
 
         # # SHORT FIX
         time.sleep(2.5)
@@ -633,15 +510,6 @@ def main():
             slam.is_running = False
             #slam.nionGen.stop_nion_gen()
             slam.fanSensor.stop_fan()
-
-        # Now navigate to important points
-        #print("Navigating to hotspots...")
-        #slam.cleanUp()
-        #for i in range(40):
-        #    time.sleep(1)
-        #    print(f"Cleaning: {i+1}/40 seconds")
-        # Stop position tracking
-        #slam.position_thread.join(timeout=1.0)
         
     except KeyboardInterrupt:
         print("Process interrupted by user")
