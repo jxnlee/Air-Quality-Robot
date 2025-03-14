@@ -145,12 +145,11 @@ class RobotSLAM:
 
     def read_sensors(self, map_x, map_y):
         self.l298nAct.stop()
-        while self.dhtSensor.temperature < 0:
-            self.dhtSensor.read_dht()
+        while self.dhtSensor.read_dht() < 0:
             time.sleep(1)
-        while self.pmsSensor.particle < 0:
-            self.pmsSensor.read_pms()
+        while self.pmsSensor.read_pms() < 0:
             time.sleep(1)
+        print(f"Temperature: {self.dhtSensor.temperature} Humidity: {self.dhtSensor.humidity} Concentration of 0.3us particles: {self.pmsSensor.particle}")
         
         self.temp_data[map_x, map_y] = self.dhtSensor.temperature
         self.humidity_data[map_x, map_y] = self.dhtSensor.humidity
@@ -215,10 +214,11 @@ class RobotSLAM:
             # another potential fix, if it just never reads.
             map_x = max(0, min(map_x, self.map_size_pixels - 1))
             map_y = max(0, min(map_y, self.map_size_pixels - 1))
-            print(f"mapx: {map_x} mapy: {map_y}")
+            #print(f"mapx: {map_x} mapy: {map_y}")
             if 0 <= map_x < self.map_size_pixels and 0 <= map_y < self.map_size_pixels:
                 self.read_sensors(map_x, map_y)
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
+                
             # Get the map
             self.slam.getmap(self.mapbytes)
             

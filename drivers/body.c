@@ -14,7 +14,7 @@ int setup()
 	}
 	init_ultrasonic();
 	init_l298n();
-	//if (!init_pms()) return 0;
+	if (!init_pms()) return 0;
 	init_fan();
 	init_nion_gen();
 	return 1;
