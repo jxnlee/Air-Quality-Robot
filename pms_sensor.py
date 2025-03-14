@@ -1,3 +1,4 @@
+# wrapper for C PMS Sensor
 import ctypes
 
 pms_lib = ctypes.CDLL("./drivers/pms.so")

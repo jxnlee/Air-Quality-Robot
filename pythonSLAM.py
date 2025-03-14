@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import time
 import math
 from threading import Thread
-import RPi.GPIO as GPIO  # For interfacing with GPIO on Raspberry Pi
 import ultrasonic_sensor
 import dht_sensor
 import l298n_act

@@ -1,3 +1,4 @@
+# wrapper for C nion generator
 import ctypes
 
 nion_gen_lib = ctypes.CDLL("./drivers/nion_gen.so")

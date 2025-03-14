@@ -1,3 +1,4 @@
+# wrapper for C Fan Actuator
 import ctypes
 
 fan_lib = ctypes.CDLL("./drivers/fan.so")
@@ -12,7 +13,7 @@ fan_lib.stop_fan.restype = None
 class Fan:
     def __init__(self):
         self.fan_lib = fan_lib
-        
+
     def start_fan(self):
         self.fan_lib.start_fan()
     
