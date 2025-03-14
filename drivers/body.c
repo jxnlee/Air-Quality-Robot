@@ -1,3 +1,10 @@
+/**
+ * @file body.c
+ * @brief Main setup file for initializing hardware components.
+ * 
+ * This file contains the setup function which initializes various hardware
+ * components required for the Air Quality Robot.
+ */
 #include "head.h"
 #include "ultrasonic.h"
 #include "l298n.h"
@@ -5,6 +12,8 @@
 #include "fan.h"
 #include "nion_gen.h"
 
+/// @brief Sets up wiringPi and initializes hardware component drivers.
+/// @return 1 if the setup is successful, 0 otherwise.
 int setup()
 {
 	if (wiringPiSetup() == -1)

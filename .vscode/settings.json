@@ -1,5 +1,6 @@
 {
-    "files.associations": {
-        "dht.h": "c"
-    }
+  "files.associations": {
+    "dht.h": "c",
+    "stdio.h": "c"
+  }
 }

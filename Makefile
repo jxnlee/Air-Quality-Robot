@@ -1,5 +1,4 @@
 all:
-	gcc -o main main.c drivers/head.c drivers/dht.c drivers/ultrasonic.c drivers/pms.c drivers/l298n.c drivers/fan.c drivers/nion_gen.c -lwiringPi
 	gcc -fPIC -shared -o drivers/body.so drivers/body.c drivers/head.c drivers/ultrasonic.c drivers/dht.c drivers/pms.c drivers/l298n.c drivers/fan.c drivers/nion_gen.c -lwiringPi
 	gcc -fPIC -shared -o drivers/ultrasonic.so drivers/ultrasonic.c drivers/head.c -lwiringPi
 	gcc -fPIC -shared -o drivers/dht.so drivers/dht.c drivers/head.c -lwiringPi

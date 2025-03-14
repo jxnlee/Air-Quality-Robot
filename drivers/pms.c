@@ -1,3 +1,16 @@
+/**
+ * @file pms.c
+ * @brief PMS5003 PM2.5 sensor driver functions.
+ * 
+ * This file contains the implementation of functions to initialize and read data
+ * from the PMS5003 PM2.5 sensor used in the Air Quality Robot.
+ * 
+ * Note: Most of the Code references Adafruit's PM2.5 Air Quality Sensor library which is 
+ * ported over except for the read_pms function which has been modified for our needs
+ *  (the remaining functions that are unused are kept in for the sake of future use and implementation)
+ *
+ * References: https://github.com/adafruit/Adafruit_PM25AQI
+ */
 #include "pms.h"
 #include <stdint.h>
 #include <string.h>
@@ -5,13 +18,19 @@
 
 #include <wiringSerial.h>
 
+// defined baud rate
 #define PMS_BAUDRATE	9600
+// defined serial port path (to usb tty converter)
 const char PMS_SERIAL_PORT[] = "/dev/ttyUSB0";
 
+// Serial port number (fd)
 static int serial_port;
 
+// PM25_Data to store PMS Reading Data
 PM25_Data pms5003_data; 
 
+/// @brief Initializes the PMS5003 sensor by opening the serial port.
+/// @return 1 if the initialization is successful, 0 otherwise.
 int init_pms()
 {
 	if ((serial_port = serialOpen(PMS_SERIAL_PORT, PMS_BAUDRATE)) < 0)
@@ -26,18 +45,25 @@ int init_pms()
 	}
 }
 
+/// @brief Reads data from the PMS5003 sensor.
+/// @param particles Pointer to store the number of particles > 0.3um per 0.1L of air.
+/// @return 1 if the data is read successfully, 0 otherwise.
 int read_pms(uint16_t* particles)
 {
 	PM25_Data* data = &pms5003_data;
 	uint8_t buffer[32];
 	uint16_t sum = 0;
 
+	// make sure serial data is available from serial port
 	if (serialDataAvail(serial_port) < 32) return 0;
 
+	// get bytes and put them into data buffer
 	for (uint8_t i = 0; i < 32; i++) buffer[i] = serialGetchar(serial_port);
 
+	// ensure that the data buffer has the appropriate starting bytes
 	if (buffer[0] != 0x42 || buffer[1] != 0x4d) return 0;
 
+	// calculate checksum
 	for (uint8_t i = 0; i < 30; i++) sum += buffer[i];
 
 	// Parse buffer to extract PM2.5 data
@@ -48,17 +74,27 @@ int read_pms(uint16_t* particles)
 		buffer_u16[i] += (buffer[2 + i * 2] << 8);
 	}
 
+	// copy to PM2.5 Data Structure
 	memcpy((void*) data, (void*) buffer_u16, 30);
-		
+	
+	// compare calculated sum with actual checksum
 	if (sum != data->checksum) return 0;
+
+	// calculate and store AQI values for US
 	data->aqi_pm25_us = pm25_aqi_us(data->pm25_env);
 	data->aqi_pm100_us = pm100_aqi_us(data->pm100_env);
 
+	// store concentration of 0.3um or more particles measured
 	*particles = data->particles_03um;
 
 	return 1;
 }
-uint16_t pm25_aqi_us(float concentration) {
+
+/// @brief Calculates the AQI for PM2.5 based on US standards.
+/// @param concentration The PM2.5 concentration.
+/// @return The AQI value.
+uint16_t pm25_aqi_us(float concentration)
+{
   float c;
   float AQI;
   c = ((uint16_t) (10 * concentration)) / 10.0;
@@ -83,7 +119,12 @@ uint16_t pm25_aqi_us(float concentration) {
   }
   return (uint16_t) (AQI+0.5);
 }
-uint16_t pm100_aqi_us(float concentration) {
+
+/// @brief Calculates the AQI for PM10 based on US standards.
+/// @param concentration The PM10 concentration.
+/// @return The AQI value.
+uint16_t pm100_aqi_us(float concentration) 
+{
   float c;
   float AQI;
   c = concentration;
@@ -108,12 +149,22 @@ uint16_t pm100_aqi_us(float concentration) {
   }
   return (uint16_t) (AQI+0.5);
 }
-float linear(uint16_t aqi_high, uint16_t aqi_low, float conc_high, float conc_low, float concentration) {
+
+/// @brief Helper function to calculate linear AQI values.
+/// @param aqi_high The high AQI value.
+/// @param aqi_low The low AQI value.
+/// @param conc_high The high concentration value.
+/// @param conc_low The low concentration value.
+/// @param concentration The current concentration.
+/// @return The calculated AQI value.
+float linear(uint16_t aqi_high, uint16_t aqi_low, float conc_high, float conc_low, float concentration) 
+{
 	 return ((concentration - conc_low) / (conc_high - conc_low))
 		* (aqi_high - aqi_low)
 		+ aqi_low;
-	}
+}
 
+/// @brief Prints the PMS5003 sensor readings to the console.
 void print_pms_readings()
 {
 	PM25_Data* data = &pms5003_data;
@@ -136,6 +187,7 @@ void print_pms_readings()
  	printf("---------------------------------------\n");
 }
 
+/// @brief Closes the serial port used by the PMS5003 sensor.
 void close_pms()
 {
 	serialClose(serial_port);
