@@ -78,27 +78,25 @@ class RobotSLAM:
         self.pixels_per_meter = map_size_pixels / map_size_meters
         self.map_size_pixels = map_size_pixels
     
-        # this is for other readings.
-        # Initialize data structures for temperature and humidity
+        # initialize arrays to store temp, humidity, and pms
         self.temp_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
         self.humidity_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
         self.pms_data = np.zeros((map_size_pixels, map_size_pixels), dtype=np.float32)
 
-        # TODO: set it to a sensible value, check more than just temperature
+        # reasonable threshold
         self.tempThreshold = 15#30
         self.humThreshold = 60
         self.parThreshold = 350
+
+        # points to revisit
         self.reVisit = []
     
+    # used to help update the SLAM algorithm. helps pinpoint where it is
     def update_odometry(self, dt_seconds):
-        """
-        Update robot pose estimation based on velocity and direction
-        This is a simplified odometry model for constant velocity movement
-        """
         # Use velocity instead of acceleration
         # came to 350 after testing and measuring on a carpet
         velocity_x = 300  # mm/s - forward velocity
-        velocity_y = 0    # mm/s - usually 0 unless you have omnidirectional wheels
+        velocity_y = 0    # mm/s - 0
         if self.turning:
             velocity_x = 0
         # Update the pose angle based on the direction counter
@@ -134,17 +132,21 @@ class RobotSLAM:
         time.sleep(TURN_TIME)  # Simulate turn time
         self.turning = False
 
+    # left turn
     def left_adjust(self):
         self.l298nAct.drive_right_backward(STRAIGHT_SPD)
         self.l298nAct.drive_left_forward(0)
         time.sleep(ADJUST_TIME)
     
+    # stopping the motors
     def pause(self):
         self.l298nAct.stop()
         time.sleep(0.5)
 
+    # read teh sensor data
     def read_sensors(self, map_x, map_y):
         self.l298nAct.stop()
+        # wait until we get sensor readings
         while self.dhtSensor.read_dht() < 0:
             time.sleep(1)
         while self.pmsSensor.read_pms() < 0:
@@ -174,6 +176,7 @@ class RobotSLAM:
             distance = self.utSensor.read_ultrasonic()
             print("distance", distance)
 
+            # wait for distance to be populated
             if distance < 0:
                 self.pause()
                 continue
@@ -205,8 +208,7 @@ class RobotSLAM:
             map_x = int(self.pose[0] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             map_y = int(self.pose[1] / 1000 * self.pixels_per_meter + self.map_size_pixels // 2)
             
-            index = map_y * self.map_size_pixels + map_x
-
+            # mapping is inaccurate, so we force it to be within range
             map_x = max(0, min(map_x, self.map_size_pixels - 1))
             map_y = max(0, min(map_y, self.map_size_pixels - 1))
 
@@ -214,7 +216,7 @@ class RobotSLAM:
                 self.read_sensors(map_x, map_y)
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
                 
-            # Get the map
+            # get the map
             self.slam.getmap(self.mapbytes)
             
             time.sleep(0.1)
@@ -254,16 +256,11 @@ class RobotSLAM:
              plt.plot(trajectory[:, 0], trajectory[:, 1], 'r-', linewidth=1)
              plt.plot(trajectory[-1, 0], trajectory[-1, 1], 'ro', markersize=5)
         
-         plt.title('BreezySLAM Map and Robot Trajectory')
-         plt.savefig('breezyslam_map.png')
+         plt.title('Map and Robot Trajectory')
+         plt.savefig('map.png')
          plt.show()
     
     def visualizeTemp(self):
-        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
-        # temp_mask = self.temp_data > 0
-        # masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
-        # plt.figure(figsize=(10,10))
-        # heatmap = plt.imshow(masked_temp, cmap='hot', origin='lower')
         smoothed_temp_data = gaussian_filter(self.temp_data, sigma=5)
         plt.figure(figsize=(10,10))
         heatmap = plt.imshow(smoothed_temp_data, cmap='hot', origin='lower', interpolation='nearest')
@@ -279,9 +276,7 @@ class RobotSLAM:
         plt.show()
         
     def visualizeHumidity(self):
-        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
-        #temp_mask = self.humidity_data > 0
-       # masked_temp = np.ma.array(self.temp_data, mask=~temp_mask)
+        # filter out the noise w. a guassian filter
         smoothed_humidity_data = gaussian_filter(self.humidity_data, sigma=5)
         plt.figure(figsize=(10,10))
         humMap = plt.imshow(smoothed_humidity_data, cmap='hot', origin='lower', interpolation='nearest')
@@ -294,10 +289,8 @@ class RobotSLAM:
         # Save and show the figure
         plt.savefig('humidity_map.png', dpi=300)
         plt.show()
+
     def visualizeParticles(self):
-        # this hides the areas not explored, could also just directly pass in tempdata into heatmap
-        #temp_mask = self.pms_data > 0
-        #masked_temp = np.ma.array(self.pms_data, mask=~temp_mask)
         smoothed_pms_data = gaussian_filter(self.pms_data, sigma=5)
         plt.figure(figsize=(10,10))
         partmap = plt.imshow(smoothed_pms_data, cmap='hot', origin='lower', interpolation='nearest')
@@ -316,16 +309,14 @@ class RobotSLAM:
         print("REVIST:")
         print(self.reVisit)
         for x1, y1 in self.reVisit:
-            # just traversing it like this should be close to optimal most of the time, since we're appending to the array, so each location is next to one another.
+            # navigate to areas
             self.navigateTo(x1, y1)
             # actuate the fan.
-            
             self.fanSensor.start_fan()
-            #if self.pms_data[x1, y1] > self.parThreshold:
-                #self.nionGen.start_nion_gen()
-            # sleep for a few seconds, can also use while loop to do the thing.
+            if self.pms_data[x1, y1] > self.parThreshold:
+                self.nionGen.start_nion_gen()
             time.sleep(5)
-            #self.nionGen.stop_nion_gen()
+            self.nionGen.stop_nion_gen()
             self.fanSensor.stop_fan()
 
     def navigateTo(self, target_x, target_y):
@@ -345,24 +336,23 @@ class RobotSLAM:
             if current_time - startTime > 12:
                 break
                 
-            # Update odometry and pose similar to position_tracking_loop
             dt = current_time - last_time
             last_time = current_time
             
-            # Only read sensor if enough time has passed (100ms minimum)
+            # wait before reading sensor again
             if current_time - last_sensor_read > 0.1:
                 # Get scan from the ultrasonic sensor
                 scan = self.utSensor.get_scan()
-                last_sensor_read = current_time  # Update last read time
+                last_sensor_read = current_time
                 
-                # Wait a bit before doing another sensor read
-                time.sleep(0.06)  # Minimum 60ms between readings
-                
+                time.sleep(0.06) 
+    
                 distance = self.utSensor.read_ultrasonic()
                 
+                # wait for distance to be populated
                 if distance == -1:
                     print("Ultrasonic reading failed, waiting longer...")
-                    time.sleep(1.0)  # Longer recovery time
+                    time.sleep(1.0)  
                     continue
             
             # Update odometry
@@ -381,7 +371,7 @@ class RobotSLAM:
             # Update trajectory for visualization
             self.trajectory.append([map_x, map_y])
             
-            # Handle navigation logic
+            # handle navigation logic
             if distance < DIST_THRESHOLD:
                 self.left_adjust()
             else:
@@ -399,9 +389,8 @@ class RobotSLAM:
                 # Drive forward
                 self.l298nAct.drive_forward(STRAIGHT_SPD)
                 
-            time.sleep(0.2)  # Increased from 0.1 to 0.2 for more stability
+            time.sleep(0.2)
         
-        # Reset for y-coordinate navigation
         last_sensor_read = 0
         
         while abs(map_y - target_y) > 100:
@@ -412,26 +401,24 @@ class RobotSLAM:
             dt = current_time - last_time
             last_time = current_time
             
-            # Only read sensor if enough time has passed
+            # wait before reading sensor again
             if current_time - last_sensor_read > 0.1:
                 # Get scan from the ultrasonic sensor
                 scan = self.utSensor.get_scan()
                 last_sensor_read = current_time
                 
-                # Wait a bit before doing another sensor read
-                time.sleep(0.06)  # Minimum 60ms between readings
+                time.sleep(0.06)
                 
                 distance = self.utSensor.read_ultrasonic()
                 
                 if distance == -1:
                     print("Ultrasonic reading failed, waiting longer...")
-                    time.sleep(1.0)  # Longer recovery time
+                    time.sleep(1.0) 
                     continue
             
             # Update odometry
             self.update_odometry(dt)
             
-            # Update SLAM with current scan and odometry
             self.slam.update(scan, pose_change=self.pose)
             
             # Get current pose estimate from SLAM
@@ -444,7 +431,7 @@ class RobotSLAM:
             # Update trajectory for visualization
             self.trajectory.append([map_x, map_y])
             
-            # Handle navigation logic
+            # handle navigation logic
             if distance < DIST_THRESHOLD:
                 self.left_adjust()
             else:
@@ -476,29 +463,30 @@ def main():
         # Start SLAM with full mapping
         slam.start()
         
-        # Run mapping for 60 seconds
+        # run mapping for 60 seconds
         print("Mapping in progress...")
         for i in range(40):
             time.sleep(1)
             print(f"Mapping: {i+1}/60 seconds")
         
-        # Stop mapping loop
+        # stop mapping loop
         slam.is_running = False
         if hasattr(slam, 'mapping_thread'):
             slam.mapping_thread.join(timeout=5.0)
         if slam.mapping_thread.is_alive():
+            # this prevents race conditions with the sensors
             print("Warning: Mapping thread did not terminate properly")
-        # Visualize the map
         slam.l298nAct.stop()
         slam.stop()
         time.sleep(1)
+        # Visualize the maps
         slam.visualize_map()
         slam.visualizeTemp()
         slam.visualizeHumidity()
         slam.visualizeParticles()
 
-        # # SHORT FIX
         time.sleep(2.5)
+        # check that theres enough places we want to revisit
         numReVisit = len(slam.reVisit)
         if numReVisit > 5:
             print(f"Revisiting for {int(numReVisit/5)}")
@@ -517,7 +505,7 @@ def main():
     finally:
         # Make sure everything is cleaned up
         slam.is_running = False
-        slam.l298nAct.stop()  # Stop motors
+        slam.l298nAct.stop()
         GPIO.cleanup()
 
 

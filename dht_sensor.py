@@ -13,7 +13,6 @@ class DHTSensor:
         self.humidity = -1
 
     def read_dht(self):
-        """Calls the C function to get temperature and humidity."""
         temp = ctypes.c_float()
         hum = ctypes.c_float()
         
@@ -25,5 +24,3 @@ class DHTSensor:
             return 1
         else:
             return -1
-        #else:
-        #    raise Exception("Failed to read DHT sensor data")

@@ -1,5 +1,6 @@
 import ctypes
 
+# inherit the Laser class, used for Lidar
 from breezyslam.sensors import Laser
 
 class UltrasonicSensor(Laser):
@@ -7,11 +8,9 @@ class UltrasonicSensor(Laser):
     Ultrasonic sensor implementation for BreezySLAM
     """
     def __init__(self):
-        # Initialize with parameters suitable for an ultrasonic sensor
-        # scan_size, scan_rate_hz, detection_angle_degrees, distance_no_detection_mm, detection_margin, offset_mm
+
         Laser.__init__(self, 360, 10, 30, 5000, 0, 0)
         
-        # Load the ultrasonic library
         self.ultrasonic_lib = ctypes.CDLL("./drivers/ultrasonic.so")
         self.ultrasonic_lib.read_ultrasonic.argtypes = [ctypes.POINTER(ctypes.c_long)]
         self.ultrasonic_lib.read_ultrasonic.restype = None
@@ -19,29 +18,27 @@ class UltrasonicSensor(Laser):
         self.distance = 0
         
     def read_ultrasonic(self):
-        # Create a ctypes ulong to hold the result
+
         distance_c = ctypes.c_long()
         
-        # Call the C function
+        # calls the c function
         self.ultrasonic_lib.read_ultrasonic(ctypes.byref(distance_c))
         
-        # Get the value from the ctypes object
+        # get value from the ctypes object
         self.distance = distance_c.value
         
         return self.distance
         
+    # mimic 360 view by giving it the distance data. needed to pass into SLAM object
     def get_scan(self):
-        """
-        Returns a 360-degree scan simulated from a single ultrasonic reading
-        """
-        # Create an array of distances
+        # array of distances
         scan = [self.distance_no_detection_mm] * self.scan_size
         
-        # Define the sensor's field of view
+        # define the sensor's field of view
         center = self.scan_size // 2
         field_of_view = int(self.detection_angle_degrees)
         
-        # Fill in the actual reading in the sensor's field of view
+        # fill in the reading in the sensor's field of view
         half_fov = field_of_view // 2
         start_idx = (center - half_fov) % self.scan_size
         end_idx = (center + half_fov) % self.scan_size

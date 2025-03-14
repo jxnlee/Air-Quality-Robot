@@ -51,7 +51,7 @@ class PMSSensor:
         if result == 1:
             self.particle = part.value
             return 1
-        return -1  # Return 0 for failures, not -1 to match C function
+        return -1
 
     def print_pms_readings(self):
         self.pms_lib.print_pms_readings()
