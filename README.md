@@ -4,6 +4,14 @@ This project is an automatic navigating robot that maps out the local area using
 
 We are using the BreezySLAM library to implement SLAM, swapping out the intended Lidar sensor with a cheaper but less reliable Ultrasonic sensor. Porting over the library to fit the Ultrasonic sensor readings is still incomplete as the results from the ultrasonic sensor are often unreliable, therefore the provided heatmaps and mapping plots are not reliable data but are there to deomonstrate the outcomes of our progress.
 
+## Prototype & Demo
+
+Our resulting prototype of the robot looks as follows:
+
+![prototype front](submission/prototype_front.png) ![prototype side](submission/prototype_side.png)
+
+You can find a video demo of the robot [here](https://youtube.com/shorts/sToMqzyGyhI?feature=share).
+
 ## Drivers
 
 Sensor drivers are stored in the drivers file and are all written in C with the WiringPi library (along with other supporting libraries). While some of the drivers are ported from other sources, modifications were made to suit our needs however references to our sources are provided in the documentation of our sensor drivers. For each component, many decisions on how to program the drivers are based on what was provided through the datasheet.
